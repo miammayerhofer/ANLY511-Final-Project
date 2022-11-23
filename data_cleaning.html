@@ -180,30 +180,90 @@ library(ggplot2)
 library(readxl)
 library(knitr)
 library(kableExtra)</code></pre>
+<hr />
+<div id="functions-for-use" class="section level3">
+<h3>Functions for Use</h3>
+<pre class="r"><code>calculate_proportions &lt;- function(input_df, threshold) {
+  
+  # create data frame for printing proportions of of NA values
+  df &lt;- data.frame(colnames(input_df), round(colMeans(is.na(input_df)), 5), row.names = NULL)
+  colnames(df) &lt;- c(&#39;Column Name&#39;, &#39;Proportion of Values NA&#39;)
+  df &lt;- df[order(df$`Proportion of Values NA`, decreasing = TRUE),]
+  df_table &lt;- df[df$`Proportion of Values NA` &gt; threshold,]
+  
+  return (df_table)
+}</code></pre>
+<pre class="r"><code>print_proportions &lt;- function(input_table) {
+  knitr::kable(df_table, row.names = FALSE) %&gt;% kable_styling(bootstrap_options = &quot;striped&quot;, full_width = F, position = &quot;center&quot;)
+}</code></pre>
+<pre class="r"><code>print_shape &lt;- function(input_df) {
+  print(paste(&#39;Our dataset shape is now: (&#39;, nrow(input_df), &#39;, &#39;, ncol(input_df), &#39;)&#39;, sep = &#39;&#39;))
+}</code></pre>
+<hr />
+</div>
 <div id="read-in-the-data" class="section level3">
 <h3>Read in the Data</h3>
-<p>Let’s first read in the data. We have five files to read in, all by the naming convention of <code>data/cardataXX.xlsx</code>, where <code>XX</code> <span class="math inline">\(\in\)</span> <code>{18, 19, 20, 21, 22}</code>.</p>
+<p>Let’s first read in the data. We have five datasets to read in, all by the naming convention of <code>data/cardataXX.xlsx</code>, where <code>XX</code> <span class="math inline">\(\in\)</span> <code>{18, 19, 20, 21, 22}</code>. We can also observe the <em>shape</em> of each dataset, indicated with the following syntax: <code>(number of rows, number of columns)</code>.</p>
 <pre class="r"><code># load in the data
 cardata2018 &lt;- read_excel(&#39;data/cardata2018.xlsx&#39;)
 cardata2019 &lt;- read_excel(&#39;data/cardata2019.xlsx&#39;)
 cardata2020 &lt;- read_excel(&#39;data/cardata2020.xlsx&#39;)
 cardata2021 &lt;- read_excel(&#39;data/cardata2021.xlsx&#39;)
-cardata2022 &lt;- read_excel(&#39;data/cardata2022.xlsx&#39;)
-
-# print dimension of data
-print(dim(cardata2018))</code></pre>
-<pre><code>## [1] 4727   67</code></pre>
-<pre class="r"><code>print(dim(cardata2019))</code></pre>
-<pre><code>## [1] 4719   67</code></pre>
-<pre class="r"><code>print(dim(cardata2020))</code></pre>
-<pre><code>## [1] 4450   67</code></pre>
-<pre class="r"><code>print(dim(cardata2021))</code></pre>
-<pre><code>## [1] 4265   67</code></pre>
-<pre class="r"><code>print(dim(cardata2022))</code></pre>
-<pre><code>## [1] 4455   67</code></pre>
-</div>
-<div id="observe-properties-of-the-data" class="section level3">
-<h3>Observe Properties of the Data</h3>
+cardata2022 &lt;- read_excel(&#39;data/cardata2022.xlsx&#39;)</code></pre>
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+Dataset Name
+</th>
+<th style="text-align:left;">
+Shape
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+data/cardata2018.xlsx
+</td>
+<td style="text-align:left;">
+(4727, 67)
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+data/cardata2019.xlsx
+</td>
+<td style="text-align:left;">
+(4719, 67)
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+data/cardata2020.xlsx
+</td>
+<td style="text-align:left;">
+(4450, 67)
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+data/cardata2021.xlsx
+</td>
+<td style="text-align:left;">
+(4265, 67)
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+data/cardata2022.xlsx
+</td>
+<td style="text-align:left;">
+(4455, 67)
+</td>
+</tr>
+</tbody>
+</table>
 <p>The five datasets come from the same source, but we want to ensure that they are compatible with one-another. The best way to check this is to ensure that the columns are the same across all datasets. If they are, we can easily append the five datasets together, by row, in order to create one, larger dataset.</p>
 <pre class="r"><code># extract column names for each dataset
 colnames2018 &lt;- colnames(cardata2018)
@@ -222,64 +282,156 @@ if ( mean(colnames2018 == colnames2019) == 1 &amp;
   print(&#39;The column names are NOT the same and in the same order across all five datasets.&#39;)
 }</code></pre>
 <pre><code>## [1] &quot;The column names are the same and in the same order across all five datasets.&quot;</code></pre>
-<p>Let’s append these datasets together since we now that they have the same structure and column names.</p>
+<p>Let’s append these datasets together since we know now that they have the same structure and column names.</p>
 <pre class="r"><code># bind datasets together by row
 cardata &lt;- rbind(cardata2018, cardata2019, cardata2020, cardata2021, cardata2022)
-print(dim(cardata))</code></pre>
-<pre><code>## [1] 22616    67</code></pre>
+print_shape(cardata)</code></pre>
+<pre><code>## [1] &quot;Our dataset shape is now: (22616, 67)&quot;</code></pre>
 <p>There are also some columns that we are not concerned with for the purpose of our analysis, so we will drop those before proceeding with the cleaning phase. These columns are:</p>
+<center>
+<table>
+<tr>
+<td>
 <ul>
-<li><code>Test Vehicle ID</code></li>
-<li><code>Test Veh Configuration #</code></li>
-<li><code>Actual Tested Testgroup</code></li>
-<li><code>Engine Code</code></li>
-<li><code>Transmission Overdrive Code</code></li>
-<li><code>Transmission Overdrive Desc</code></li>
-<li><code>Shift Indicator Light Use Cd</code></li>
-<li><code>Shift Indicator Light Use Desc</code></li>
-<li><code>Test Number</code></li>
-<li><code>Test Originator</code></li>
-<li><code>Analytically Derived FE?</code></li>
-<li><code>ADFE Test Number</code></li>
-<li><code>Test Procedure Cd</code></li>
-<li><code>Test Procedure Description</code></li>
-<li><code>Test Fuel Type Cd</code></li>
-<li><code>Test Category</code></li>
-<li><code>FE_UNIT</code></li>
-<li><code>FE Bag 1</code></li>
-<li><code>FE Bag 2</code></li>
-<li><code>FE Bag 3</code></li>
-<li><code>FE Bag 4</code></li>
+<li><code>Test Vehicle ID</code>
+</td>
+<td>
+<ul>
+<li><code>Test Veh Configuration #</code>
+</td>
+<td>
+<ul>
+<li><code>Actual Tested Testgroup</code>
+</td>
+</tr>
+<tr>
+<td>
+<ul>
+<li><code>Engine Code</code>
+</td>
+<td>
+<ul>
+<li><code>Transmission Overdrive Code</code>
+</td>
+<td>
+<ul>
+<li><code>Transmission Overdrive Desc</code>
+</td>
+</tr>
+<tr>
+<td>
+<ul>
+<li><code>Shift Indicator Light Use Cd</code>
+</td>
+<td>
+<ul>
+<li><code>Shift Indicator Light Use Desc</code>
+</td>
+<td>
+<ul>
+<li><code>Test Number</code>
+</td>
+</tr>
+<tr>
+<td>
+<ul>
+<li><code>Test Originator</code>
+</td>
+<td>
+<ul>
+<li><code>Analytically Derived FE?</code>
+</td>
+<td>
+<ul>
+<li><code>ADFE Test Number</code>
+</td>
+</tr>
+<tr>
+<td>
+<ul>
+<li><code>Test Procedure Cd</code>
+</td>
+<td>
+<ul>
+<li><code>Test Procedure Description</code>
+</td>
+<td>
+<ul>
+<li><code>Test Fuel Type Cd</code>
+</td>
+</tr>
+<tr>
+<td>
+<ul>
+<li><code>Test Category</code>
+</td>
+<td>
+<ul>
+<li><code>FE_UNIT</code>
+</td>
+<td>
+<ul>
+<li><code>FE Bag 1</code>
+</td>
+</tr>
+<tr>
+<td>
+<ul>
+<li><code>FE Bag 2</code>
+</td>
+<td>
+<ul>
+<li><code>FE Bag 3</code>
+</td>
+<td>
+<ul>
+<li><code>FE Bag 4</code>
+</td>
+</tr>
+</table>
+</center></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
 </ul>
 <pre class="r"><code># define columns to remove
-remove &lt;- c(&quot;Test Vehicle ID&quot;, 
-            &quot;Test Veh Configuration #&quot;, 
-            &quot;Actual Tested Testgroup&quot;, 
-            &quot;Engine Code&quot;, 
-            &quot;Transmission Overdrive Code&quot;,
-            &quot;Transmission Overdrive Desc&quot;,
-            &quot;Shift Indicator Light Use Cd&quot;,
-            &quot;Shift Indicator Light Use Desc&quot;,
-            &quot;Test Number&quot;,
-            &quot;Test Originator&quot;,
-            &quot;Analytically Derived FE?&quot;,
-            &quot;ADFE Test Number&quot;,
-            &quot;Test Procedure Cd&quot;,
-            &quot;Test Procedure Description&quot;,
-            &quot;Test Fuel Type Cd&quot;,
-            &quot;Test Category&quot;,
-            &quot;FE_UNIT&quot;,
-            &quot;FE Bag 1&quot;,
-            &quot;FE Bag 2&quot;,
-            &quot;FE Bag 3&quot;,
-            &quot;FE Bag 4&quot;)
+remove &lt;- c(&quot;Test Vehicle ID&quot;, &quot;Test Veh Configuration #&quot;, &quot;Actual Tested Testgroup&quot;, 
+            &quot;Engine Code&quot;, &quot;Transmission Overdrive Code&quot;, &quot;Transmission Overdrive Desc&quot;,
+            &quot;Shift Indicator Light Use Cd&quot;, &quot;Shift Indicator Light Use Desc&quot;, &quot;Test Number&quot;,
+            &quot;Test Originator&quot;, &quot;Analytically Derived FE?&quot;, &quot;ADFE Test Number&quot;,
+            &quot;Test Procedure Cd&quot;, &quot;Test Procedure Description&quot;, &quot;Test Fuel Type Cd&quot;,
+            &quot;Test Category&quot;, &quot;FE_UNIT&quot;, &quot;FE Bag 1&quot;,
+            &quot;FE Bag 2&quot;, &quot;FE Bag 3&quot;, &quot;FE Bag 4&quot;)
 
 # remove columns and report new shape
 cardata &lt;- cardata[, !( colnames(cardata) %in% remove)]
-print(dim(cardata))</code></pre>
-<pre><code>## [1] 22616    46</code></pre>
+print_shape(cardata)</code></pre>
+<pre><code>## [1] &quot;Our dataset shape is now: (22616, 46)&quot;</code></pre>
+</div>
+<div id="address-missing-values" class="section level3">
+<h3>Address Missing Values</h3>
 <p>Now, with the columns that we do have, we can observe how many <code>NA</code> values exist in each column. We will set a threshold of <strong>10%</strong>; a column with more than 10 percent of its values being <code>NA</code> expresses a large number of missing values in our eyes and we will remove it from our analysis. Below, we can see all columns expressing more than 10% of their values as <code>NA</code>.</p>
-<table class="table table-striped" style="width: auto !important; ">
+<pre class="r"><code># print the proportions of NA values in each column using a threshold of 10%
+df_table &lt;- calculate_proportions(cardata, 0.10)
+print_proportions(df_table)</code></pre>
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
 <th style="text-align:left;">
@@ -381,22 +533,19 @@ CO (g/mi)
 </tr>
 </tbody>
 </table>
-<p>We can then remove this columns.</p>
+<p>We can then remove these columns.</p>
 <pre class="r"><code># remove high-probability NA columns from data frame
 remove &lt;- df_table$`Column Name`
 
 # remove columns and report new shape
 cardata &lt;- cardata[, !( colnames(cardata) %in% remove)]
-print(dim(cardata))</code></pre>
-<pre><code>## [1] 22616    35</code></pre>
+print_shape(cardata)</code></pre>
+<pre><code>## [1] &quot;Our dataset shape is now: (22616, 35)&quot;</code></pre>
 <p>We still have columns expressing <code>NA</code> values, however. These columns, of course, have less than 10% of their values being <code>NA</code>, after the removal performed above. These columns can be seen below.</p>
-<pre class="r"><code># create data frame for printing proportions of of NA values
-df &lt;- data.frame(colnames(cardata), round(colMeans(is.na(cardata)), 5), row.names = NULL)
-colnames(df) &lt;- c(&#39;Column Name&#39;, &#39;Proportion of Values NA&#39;)
-df &lt;- df[order(df$`Proportion of Values NA`, decreasing = TRUE),]
-df_table &lt;- df[df$`Proportion of Values NA` &gt; 0,]
-knitr::kable(df_table, row.names = FALSE) %&gt;% kable_styling(bootstrap_options = &quot;striped&quot;, full_width = F, position = &quot;left&quot;)</code></pre>
-<table class="table table-striped" style="width: auto !important; ">
+<pre class="r"><code># print the proportions of NA values in each column using a threshold of 0%
+df_table &lt;- calculate_proportions(cardata, 0)
+print_proportions(df_table)</code></pre>
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
 <th style="text-align:left;">
@@ -474,12 +623,13 @@ RND_ADJ_FE
 </tr>
 </tbody>
 </table>
-<p>Histograms of:</p>
+<p>Let’s start by observing the first three variables:</p>
 <ul>
 <li><code>DT-Inertia Work Ratio Rating</code></li>
 <li><code>DT-Absolute Speed Change Ratg</code></li>
 <li><code>DT-Energy Economy Rating</code></li>
 </ul>
+<p>We can make histograms to see what their distributions are like.</p>
 <pre class="r"><code>par(mfrow = c(1, 3))
 hist(cardata$`DT-Inertia Work Ratio Rating`, main = &#39;DT-Inertia Work Ratio Rating&#39;, breaks = 20)
 hist(cardata$`DT-Absolute Speed Change Ratg`, main = &#39;DT-Absolute Speed Change Rating&#39;, breaks = 20)
@@ -490,13 +640,11 @@ hist(cardata$`DT-Energy Economy Rating`, main = &#39;DT-Energy Economy Rating&#3
 cardata$`DT-Inertia Work Ratio Rating`[cardata$`DT-Inertia Work Ratio Rating` &gt; 50] &lt;- NA
 cardata$`DT-Absolute Speed Change Ratg`[cardata$`DT-Absolute Speed Change Ratg` &gt; 50] &lt;- NA
 cardata$`DT-Energy Economy Rating`[cardata$`DT-Energy Economy Rating` &gt; 50] &lt;- NA</code></pre>
-<pre class="r"><code># create data frame for printing proportions of of NA values
-df &lt;- data.frame(colnames(cardata), round(colMeans(is.na(cardata)), 5), row.names = NULL)
-colnames(df) &lt;- c(&#39;Column Name&#39;, &#39;Proportion of Values NA&#39;)
-df &lt;- df[order(df$`Proportion of Values NA`, decreasing = TRUE),]
-df_table &lt;- df[df$`Proportion of Values NA` &gt; 0,]
-knitr::kable(df_table, row.names = FALSE) %&gt;% kable_styling(bootstrap_options = &quot;striped&quot;, full_width = F, position = &quot;left&quot;)</code></pre>
-<table class="table table-striped" style="width: auto !important; ">
+<p>We can also observe our new, updated measurements of proportions of values in columns that are <code>NA</code>.</p>
+<pre class="r"><code># create data frame for printing proportions of NA values
+df_table &lt;- calculate_proportions(cardata, 0)
+print_proportions(df_table)</code></pre>
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
 <th style="text-align:left;">
@@ -580,30 +728,66 @@ remove &lt;- df_table$`Column Name`[1:3]
 
 # remove columns and report new shape
 cardata &lt;- cardata[, !( colnames(cardata) %in% remove)]
-print(dim(cardata))</code></pre>
-<pre><code>## [1] 22616    32</code></pre>
-</div>
-<div id="columns-with-null-values" class="section level3">
-<h3>Columns with Null Values</h3>
-<p>The following three variables have the same number of missing values in the dataset. Let’s see if they are from the same rows.</p>
-<ul>
-<li><code>DT-Inertia Work Ratio Rating</code></li>
-<li><code>DT-Absolute Speed Change Ratg</code></li>
-<li><code>DT-Energy Economy Rating</code></li>
-</ul>
-<pre class="r"><code># extract row names where these three variables are missing
-dti_null &lt;- rownames(cardata[is.na(cardata$`DT-Inertia Work Ratio Rating`), ])
-dta_null &lt;- rownames(cardata[is.na(cardata$`DT-Absolute Speed Change Ratg`), ])
-dte_null &lt;- rownames(cardata[is.na(cardata$`DT-Energy Economy Rating`), ])
-
-# ensure that the column names are all the same across all datasets
-if ( mean(dti_null == dta_null) == 1 &amp;
-     mean(dti_null == dte_null) == 1 ) {
-  print(&#39;These variables are missing in the same rows in the dataset.&#39;)
-} else {
-  print(&#39;These variables are missing in different rows in the dataset.&#39;)
-}</code></pre>
-<pre class="r"><code>hist(cardata$`DT-Energy Economy Rating`)</code></pre>
+print_shape(cardata)</code></pre>
+<pre><code>## [1] &quot;Our dataset shape is now: (22616, 32)&quot;</code></pre>
+<p>Again, we can observe the proportion of values in columns that are <code>NA</code> for columns that have at least one <code>NA</code> value.</p>
+<pre class="r"><code># create data frame for printing proportions of of NA values
+df_table &lt;- calculate_proportions(cardata, 0)
+print_proportions(df_table)</code></pre>
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+Column Name
+</th>
+<th style="text-align:right;">
+Proportion of Values NA
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+CO2 (g/mi)
+</td>
+<td style="text-align:right;">
+0.05518
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Aftertreatment Device Cd
+</td>
+<td style="text-align:right;">
+0.04196
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Aftertreatment Device Desc
+</td>
+<td style="text-align:right;">
+0.04196
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+# of Cylinders and Rotors
+</td>
+<td style="text-align:right;">
+0.04059
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RND_ADJ_FE
+</td>
+<td style="text-align:right;">
+0.01375
+</td>
+</tr>
+</tbody>
+</table>
 <p>The following two variables have the same number of missing values in the dataset. Let’s see if they are from the same rows.</p>
 <ul>
 <li><code>Aftertreatment Device Cd</code></li>

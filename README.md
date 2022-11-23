@@ -8,9 +8,9 @@ This repository contains the work for Georgetown University's ANLY-511 Final Pro
 
 **Edited By**
 <ul>
-    <li><b>Mia Mayerhofer</b> - mmm552@georgetown.edu</li>
-    <li><b>Matt Moriarty</b> - mdm341@georgetown.edu</li>
-    <li><b>Natalie Smith</b> - nls73@georgetown.edu</li>
+    <li><b>Mia Mayerhofer</b> - mmm552@georgetown.edu - <a href="https://github.com/miammayerhofer">miammayerhofer</a></li>
+    <li><b>Matt Moriarty</b> - mdm341@georgetown.edu - <a href="https://github.com/mattmoriarty341">mattmoriarty341</a></li>
+    <li><b>Natalie Smith</b> - nls73@georgetown.edu - <a href="https://github.com/smithnatalie">smithnatalie</a></li>
     <li><b>Madelyne Ventura</b> - mv790@georgetown.edu</li>
     <li><b>Linlin Wang</b> - lw849@georgetown.edu</li>
 </ul>

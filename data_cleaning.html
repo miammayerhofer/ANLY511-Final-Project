@@ -424,6 +424,7 @@ remove &lt;- c(&quot;Test Vehicle ID&quot;, &quot;Test Veh Configuration #&quot;
 cardata &lt;- cardata[, !( colnames(cardata) %in% remove)]
 print_shape(cardata)</code></pre>
 <pre><code>## [1] &quot;Our dataset shape is now: (22616, 46)&quot;</code></pre>
+<hr />
 </div>
 <div id="address-missing-values" class="section level3">
 <h3>Address Missing Values</h3>
@@ -804,6 +805,14 @@ if ( mean(after_cd_null == after_desc_null) == 1 ) {
   print(&#39;These variables are missing in different rows in the dataset.&#39;)
 }</code></pre>
 <pre><code>## [1] &quot;These variables are missing in the same rows in the dataset.&quot;</code></pre>
+<p>The missing values in the dataset for these two variables <em>do</em> come from the same rows, which makes sense given their association with each other. The <code>Aftertreatment Device Desc</code> variable is just a description for the label of the <code>Aftertreatment Device Cd</code> variable. Since these are categorical variables, and there are only a small number of <code>NA</code> values (less than 5%), we will leave the <code>NA</code> values as they are and likely remove them if we engage in an analysis on both columns. We opt not to remove the <em>rows</em> corresponding to these missing values because there is valuable data in the other 30 columns present.</p>
+<p>The last three variables containing missing values left to address are:</p>
+<ul>
+<li><code>CO2 (g/mi)</code></li>
+<li><code># of Cylinders and Rotors</code></li>
+<li><code>RND_ADJ_FE</code></li>
+</ul>
+<p>Let’s start with <code>CO2 (g/mi)</code> and observe its missing values.</p>
 </div>
 
 

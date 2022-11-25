@@ -19,12 +19,12 @@ This repository contains the work for Georgetown University's ANLY-511 Final Pro
 
 **File Structure**
 <ul>
-    <li><code><span style="color:#0000ff;">data</span>/</code> - This is where our data lives. We have decided to include our data directly in this repository because each file is small.</li>
+    <li><code><span style="color:#0000ff;">data</span>/</code> - This is where our data lives. We have decided to include our data directly in this repository because each file is small (less than 2MB).</li>
     <ul>
         <li><code><span style="color:#0000ff;">cardata20</span>XX<span style="color:#0000ff;">.xlsx</span></code> - Five datasets, each corresponding to a different year between 2018 and 2022. The <code>XX</code> here corresponds to the following: <code>{18, 19, 20, 21, 22}</code>.</li>
         <li><code><span style="color:#0000ff;">cardata_clean.csv</span></code> - Our clean dataset, generated from <code>data_cleaning.Rmd</code>.</li>
     </ul>
-    <li><code><span style="color:#0000ff;">data_cleaning</span>/</code> - This is where we clean our data and create the file</li>
+    <li><code><span style="color:#0000ff;">data_cleaning</span>/</code> - This is where we clean our data using an RMarkdown file.</li>
     <ul>
         <li><code><span style="color:#0000ff;">data_cleaning.{Rmd, html, pdf}</span></code> - The RMarkdown (<code><span style="color:#0000ff;">Rmd</span></code>) file that cleans our data and creates the file <code><span style="color:#0000ff;">cardata_clean.csv</span></code>, as well as the HTML- (<code><span style="color:#0000ff;">html</span></code>) and PDF- (<code><span style="color:#0000ff;">pdf</span></code>) rendered output files.</li>
     </ul>

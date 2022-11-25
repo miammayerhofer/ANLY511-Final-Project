@@ -52,11 +52,11 @@ Let's first read in the data. We have five datasets to read in, all by the namin
 
 ```{r warning = FALSE}
 # load in the data
-cardata2018 <- read_excel('data/cardata2018.xlsx')
-cardata2019 <- read_excel('data/cardata2019.xlsx')
-cardata2020 <- read_excel('data/cardata2020.xlsx')
-cardata2021 <- read_excel('data/cardata2021.xlsx')
-cardata2022 <- read_excel('data/cardata2022.xlsx')
+cardata2018 <- read_excel('../data/cardata2018.xlsx')
+cardata2019 <- read_excel('../data/cardata2019.xlsx')
+cardata2020 <- read_excel('../data/cardata2020.xlsx')
+cardata2021 <- read_excel('../data/cardata2021.xlsx')
+cardata2022 <- read_excel('../data/cardata2022.xlsx')
 ```
 
 ```{r echo = FALSE}
@@ -390,5 +390,5 @@ After addressing the missing values in the data, we find that we only have appro
 Finally, we need to export this cleaned data so that we can use it in our analyses.
 
 ```{r}
-write.csv(cardata, 'data/cardata_clean.csv')
+write.csv(cardata, '../data/cardata_clean.csv')
 ```

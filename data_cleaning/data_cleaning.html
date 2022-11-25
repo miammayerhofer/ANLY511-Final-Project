@@ -205,11 +205,11 @@ library(kableExtra)</code></pre>
 <h3>Read in the Data</h3>
 <p>Let’s first read in the data. We have five datasets to read in, all by the naming convention of <code>data/cardataXX.xlsx</code>, where <code>XX</code> <span class="math inline">\(\in\)</span> <code>{18, 19, 20, 21, 22}</code>. We can also observe the <em>shape</em> of each dataset, indicated with the following syntax: <code>(number of rows, number of columns)</code>.</p>
 <pre class="r"><code># load in the data
-cardata2018 &lt;- read_excel(&#39;data/cardata2018.xlsx&#39;)
-cardata2019 &lt;- read_excel(&#39;data/cardata2019.xlsx&#39;)
-cardata2020 &lt;- read_excel(&#39;data/cardata2020.xlsx&#39;)
-cardata2021 &lt;- read_excel(&#39;data/cardata2021.xlsx&#39;)
-cardata2022 &lt;- read_excel(&#39;data/cardata2022.xlsx&#39;)</code></pre>
+cardata2018 &lt;- read_excel(&#39;../data/cardata2018.xlsx&#39;)
+cardata2019 &lt;- read_excel(&#39;../data/cardata2019.xlsx&#39;)
+cardata2020 &lt;- read_excel(&#39;../data/cardata2020.xlsx&#39;)
+cardata2021 &lt;- read_excel(&#39;../data/cardata2021.xlsx&#39;)
+cardata2022 &lt;- read_excel(&#39;../data/cardata2022.xlsx&#39;)</code></pre>
 <table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
@@ -924,7 +924,7 @@ CO2 (g/mi)
 <div id="export-clean-data" class="section level3">
 <h3>Export Clean Data</h3>
 <p>Finally, we need to export this cleaned data so that we can use it in our analyses.</p>
-<pre class="r"><code>write.csv(cardata, &#39;data/cardata_clean.csv&#39;)</code></pre>
+<pre class="r"><code>write.csv(cardata, &#39;../data/cardata_clean.csv&#39;)</code></pre>
 </div>
 
 

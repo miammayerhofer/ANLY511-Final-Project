@@ -34,7 +34,7 @@ calculate_proportions <- function(input_df, threshold) {
 
 ```{r}
 print_table <- function(input_table) {
-  knitr::kable(df_table, row.names = FALSE) %>% kable_styling(bootstrap_options = "striped", full_width = F, position = "center")
+  knitr::kable(input_table, row.names = FALSE) %>% kable_styling(bootstrap_options = "striped", full_width = F, position = "center")
 }
 ```
 
@@ -177,40 +177,103 @@ print_shape(cardata)
 
 -----
 
-### Address Missing Values
+### Split Data into Two
+
+Since one large are of focus of ours is comparing electric vehicles to non-electric vehicles, we will split our dataset into two groups: one containing only electric vehicles and one containing only non-electric vehicles. This will allow us to make easy comparisons both between datasets and within datasets.
+
+```{r}
+# look at the unique fuel types
+unique(cardata$`Test Fuel Type Description`)
+```
+
+Observing the unique fuel types above, we will split the dataset on cars with `Test Fuel Type Description` labeled as `Electricity` or `Hydrogen 5`, leaving the remaining fuel types for the other dataset.
+
+```{r}
+# split the dataset in two
+cardata_electric <- cardata[cardata$`Test Fuel Type Description` %in% c('Electricity', 'Hydrogen 5'),]
+cardata_nonelectric <- cardata[!(cardata$`Test Fuel Type Description` %in% c('Electricity', 'Hydrogen 5')),]
+```
+
+-----
+
+### Address Missing Values by Column
 
 Now, with the columns that we do have, we can observe how many `NA` values exist in each column. We will set a threshold of **10%**; a column with more than 10 percent of its values being `NA` expresses a large number of missing values in our eyes and we will remove it from our analysis. Below, we can see all columns expressing more than 10% of their values as `NA`.
 
 ```{r}
 # print the proportions of NA values in each column using a threshold of 10%
-df_table <- calculate_proportions(cardata, 0.10)
-print_table(df_table)
+electric_table <- calculate_proportions(cardata_electric, 0.10)
+nonelectric_table <- calculate_proportions(cardata_nonelectric, 0.10)
+print_table(electric_table)
+print_table(nonelectric_table)
 ```
 
-We can then remove these columns.
+We can then remove these columns from each respective dataset. Note that the `RND_ADJ_FE` and `CO2 (g/mi)` variables are ones that we'd like to work with, however, so we will keep those regardless of their missing value counts.
 
 ```{r}
 # remove high-probability NA columns from data frame
-remove <- df_table$`Column Name`
+remove_electric <- electric_table$`Column Name`
+remove_electric <- remove_electric[!(remove_electric %in% c('RND_ADJ_FE', 'CO2 (g/mi)'))]
+remove_nonelectric <- nonelectric_table$`Column Name`
 
 # remove columns and report new shape
-cardata <- cardata[, !( colnames(cardata) %in% remove)]
-print_shape(cardata)
+cardata_electric <- cardata_electric[, !( colnames(cardata_electric) %in% remove_electric)]
+cardata_nonelectric <- cardata_nonelectric[, !( colnames(cardata_nonelectric) %in% remove_nonelectric)]
+print_shape(cardata_electric)
+print_shape(cardata_nonelectric)
 ```
+
+-----
+
+### Electric Vehicle Data
 
 We still have columns expressing `NA` values, however. These columns, of course, have less than 10% of their values being `NA`, after the removal performed above. These columns can be seen below.
 
 ```{r}
 # print the proportions of NA values in each column using a threshold of 0%
-df_table <- calculate_proportions(cardata, 0)
-print_table(df_table)
+electric_table <- calculate_proportions(cardata_electric, 0)
+print_table(electric_table)
+```
+
+We can see that the electric vehicle data only has two columns with missing values: `RND_ADJ_FE` and `CO2 (g/mi)`. We've decided to keep the `CO2 (g/mi)` in order to provide comparisons between the electric and non-electric vehicle data, but we want to address the specific missing values of the `RND_ADJ_FE` variable. This variable is an expression of miles per gallon. Let's take a look at a histogram of this variable.
+
+```{r}
+# plot histogram of the electric car MPG values
+hist(cardata_electric$RND_ADJ_FE, xlab = 'Miles per Gallon', main = 'Histogram of Miles per Gallon', breaks = 20)
+```
+
+We can see that there is at least one outlier on the high end of the distribution, expressing a value of 1000. We will replace these value(s) with missing values in order to obtain results that have more validity. We will then replace the missing values with the *median* value of the distribution, as this is a safer way to do so without making any bold assumptions.
+
+```{r}
+# replace high outliers with missing value
+cardata_electric$RND_ADJ_FE[cardata_electric$RND_ADJ_FE > 500] <- NA
+# replace missing values with the median value
+cardata_electric$RND_ADJ_FE[is.na(cardata_electric$RND_ADJ_FE)] <- median(cardata_electric$RND_ADJ_FE, na.rm = TRUE)
+```
+
+We can now observe the columns with missing values in the electric vehicle dataset and notice that we have cleaned it to our liking. Note that the `CO2 (g/mi)` variable still remains and will likely be interpreted as **0** emission from these electric vehicles.
+
+```{r}
+# print the proportions of NA values in each column using a threshold of 0%
+electric_table <- calculate_proportions(cardata_electric, 0)
+print_table(electric_table)
 ```
 
 -----
 
+### Non-Electric Vehicle Data
+
+We still have columns expressing `NA` values for the non-electric vehicle dataset. These columns, of course, have less than 10% of their values being `NA`, after the removal performed above. These columns can be seen below.
+
+```{r}
+# print the proportions of NA values in each column using a threshold of 0%
+nonelectric_table <- calculate_proportions(cardata_nonelectric, 0)
+print_table(nonelectric_table)
+```
+
 #### `DT-Inertia Work Ratio Rating`, `DT-Absolute Speed Change Ratg`, and `DT-Energy Economy Rating`
 
-Let's start by observing the first three variables:
+Let's start by observing these three variables:
 
 * `DT-Inertia Work Ratio Rating`
 * `DT-Absolute Speed Change Ratg`
@@ -220,45 +283,31 @@ We can make histograms to see what their distributions are like.
 
 ```{r fig.width = 10}
 par(mfrow = c(1, 3))
-hist(cardata$`DT-Inertia Work Ratio Rating`, main = 'DT-Inertia Work Ratio Rating', breaks = 20)
-hist(cardata$`DT-Absolute Speed Change Ratg`, main = 'DT-Absolute Speed Change Rating', breaks = 20)
-hist(cardata$`DT-Energy Economy Rating`, main = 'DT-Energy Economy Rating', breaks = 20)
+hist(cardata_nonelectric$`DT-Inertia Work Ratio Rating`, main = 'DT-Inertia Work Ratio Rating', breaks = 20)
+hist(cardata_nonelectric$`DT-Absolute Speed Change Ratg`, main = 'DT-Absolute Speed Change Rating', breaks = 20)
+hist(cardata_nonelectric$`DT-Energy Economy Rating`, main = 'DT-Energy Economy Rating', breaks = 20)
 ```
 
-It is evident that each of these columns has a set of observations marked with a rating around $100$. This is likely comparable to an `NA` value, as the distribution of values for these attributes is almost entirely hovering around a value of $0$. Let's replace these values with `NA` values so that we don't confuse ourselves with them being valid.
+It is evident that each of these columns has a set of observations marked with a rating around $100$. This is likely comparable to an `NA` value, as the distribution of values for these attributes is almost entirely hovering around a value of $0$. Let's replace these values with `NA` values so that we don't confuse ourselves with them being valid. Then, since the remaining distribution appears to be very symmetric, we can replace the missing values with the mean of the column for each variable.
 
 ```{r}
 # replace high outliers with NA
-cardata$`DT-Inertia Work Ratio Rating`[cardata$`DT-Inertia Work Ratio Rating` > 50] <- NA
-cardata$`DT-Absolute Speed Change Ratg`[cardata$`DT-Absolute Speed Change Ratg` > 50] <- NA
-cardata$`DT-Energy Economy Rating`[cardata$`DT-Energy Economy Rating` > 50] <- NA
+cardata_nonelectric$`DT-Inertia Work Ratio Rating`[cardata_nonelectric$`DT-Inertia Work Ratio Rating` > 50] <- NA
+cardata_nonelectric$`DT-Absolute Speed Change Ratg`[cardata_nonelectric$`DT-Absolute Speed Change Ratg` > 50] <- NA
+cardata_nonelectric$`DT-Energy Economy Rating`[cardata_nonelectric$`DT-Energy Economy Rating` > 50] <- NA
+
+# replace missing values with the mean value
+cardata_nonelectric$`DT-Inertia Work Ratio Rating`[is.na(cardata_nonelectric$`DT-Inertia Work Ratio Rating`)] <- mean(cardata_nonelectric$`DT-Inertia Work Ratio Rating`, na.rm = TRUE)
+cardata_nonelectric$`DT-Absolute Speed Change Ratg`[is.na(cardata_nonelectric$`DT-Absolute Speed Change Ratg`)] <- mean(cardata_nonelectric$`DT-Absolute Speed Change Ratg`, na.rm = TRUE)
+cardata_nonelectric$`DT-Energy Economy Rating`[is.na(cardata_nonelectric$`DT-Energy Economy Rating`)] <- mean(cardata_nonelectric$`DT-Energy Economy Rating`, na.rm = TRUE)
 ```
 
-We can also observe our new, updated measurements of proportions of values in columns that are `NA`.
+We can now observe our new, updated measurements of proportions of values in columns that are `NA`.
 
 ```{r}
 # create data frame for printing proportions of NA values
-df_table <- calculate_proportions(cardata, 0)
-print_table(df_table)
-```
-
-These columns, having been updated by our observations above, now have proportions of missing (or ambiguous) values greater than 10%. Keeping our threshold in mind, we will drop these columns as well.
-
-```{r}
-# remove high-probability NA columns from data frame
-remove <- df_table$`Column Name`[1:3]
-
-# remove columns and report new shape
-cardata <- cardata[, !( colnames(cardata) %in% remove)]
-print_shape(cardata)
-```
-
-Again, we can observe the proportion of values in columns that are `NA` for columns that have at least one `NA` value.
-
-````{r}
-# create data frame for printing proportions of of NA values
-df_table <- calculate_proportions(cardata, 0)
-print_table(df_table)
+nonelectric_table <- calculate_proportions(cardata_nonelectric, 0)
+print_table(nonelectric_table)
 ```
 
 -----
@@ -272,8 +321,8 @@ The following two variables have the same number of missing values in the datase
 
 ```{r}
 # extract row names where these three variables are missing
-after_cd_null <- rownames(cardata[is.na(cardata$`Aftertreatment Device Cd`), ])
-after_desc_null <- rownames(cardata[is.na(cardata$`Aftertreatment Device Desc`), ])
+after_cd_null <- rownames(cardata_nonelectric[is.na(cardata_nonelectric$`Aftertreatment Device Cd`), ])
+after_desc_null <- rownames(cardata_nonelectric[is.na(cardata_nonelectric$`Aftertreatment Device Desc`), ])
 
 # ensure that the column names are all the same across all datasets
 if ( mean(after_cd_null == after_desc_null) == 1 ) {
@@ -283,36 +332,38 @@ if ( mean(after_cd_null == after_desc_null) == 1 ) {
 }
 ```
 
-The missing values in the dataset for these two variables *do* come from the same rows, which makes sense given their association with each other; the `Aftertreatment Device Desc` variable is just a description for the label of the `Aftertreatment Device Cd` variable. Since these are categorical variables, and there are only a small number of `NA` values (less than 5%), we will leave the `NA` values as they are and likely remove them if we engage in an analysis on both columns. We opt not to remove the *rows* corresponding to these missing values because there is valuable data in the other 30 columns present.
+The missing values in the dataset for these two variables *do* come from the same rows, which makes sense given their association with each other; the `Aftertreatment Device Desc` variable is just a description for the label of the `Aftertreatment Device Cd` variable. Since these are categorical variables, and there are only a small number of `NA` values (less than 1%), we will leave the `NA` values as they are and likely remove them if we engage in an analysis on both columns. We opt not to remove the *rows* corresponding to these missing values because there is valuable data in the other 30 columns present.
 
 <br>
 
-The last three variables containing missing values left to address are:
+The last few variables containing missing values left to address are:
 
+* `THC (g/mi)`
+* `CO (g/mi)`
 * `CO2 (g/mi)`
 * `# of Cylinders and Rotors`
 * `RND_ADJ_FE`
 
 -----
 
-#### `CO2 (g/mi)`
+#### `THC (g/mi)`, `CO (g/mi)`, and `CO2 (g/mi)`
 
-Let's start with `CO2 (g/mi)` and observe its missing values.
+Let's start with these variables and observe their missing values.
 
-```{r}
-# extract the rows where 'CO2 (g/mi)' is missing
-na_co2 <- cardata[is.na(cardata$`CO2 (g/mi)`), ]
-
-# proportion of electric vehicles missing this value
-prop <- sum(na_co2$`Test Fuel Type Description` == 'Electricity') / sum(cardata$`Test Fuel Type Description` == 'Electricity')
-print(paste("The proportion of Electric vehicles missing a value for 'CO2 (g/mi)' is:", prop))
+```{r fig.width = 10}
+par(mfrow = c(1, 3))
+hist(cardata_nonelectric$`THC (g/mi)`, main = 'THC (g/mi)', breaks = 20)
+hist(cardata_nonelectric$`CO (g/mi)`, main = 'CO (g/mi)', breaks = 20)
+hist(cardata_nonelectric$`CO2 (g/mi)`, main = 'CO2 (g/mi)', breaks = 20)
 ```
 
-We can see that *all* electric vehicles are missing a value for the `CO2 (g/mi)` attribute. This may be indicative of an emission rate of **0.00 g/mi**, so we will fill these missing values with that value. Still, we will keep this assumption in mind when proceeding with this data, as our assumption might affect the results of future analysis.
+Given the shapes of these distributions, we believe it is a safe choice to replace the missing values (which make up less than 10% of the data for each distribution) with the median value in that distribution. This is a conservative approach and allows us to refrain from making any bold assumptions about the true values that are missing.
 
 ```{r}
-# replace all electric vehicle CO2 emissions with 0 (all are missing, as discovered above)
-cardata[cardata$`Test Fuel Type Description` == 'Electricity', ]$`CO2 (g/mi)` <- 0
+# replace missing values with the mean value
+cardata_nonelectric$`THC (g/mi)`[is.na(cardata_nonelectric$`THC (g/mi)`)] <- mean(cardata_nonelectric$`THC (g/mi)`, na.rm = TRUE)
+cardata_nonelectric$`CO (g/mi)`[is.na(cardata_nonelectric$`CO (g/mi)`)] <- mean(cardata_nonelectric$`CO (g/mi)`, na.rm = TRUE)
+cardata_nonelectric$`CO2 (g/mi)`[is.na(cardata_nonelectric$`CO2 (g/mi)`)] <- mean(cardata_nonelectric$`CO2 (g/mi)`, na.rm = TRUE)
 ```
 
 -----
@@ -323,14 +374,14 @@ Let's move on to `# of Cylinders and Rotors`.
 
 ```{r}
 # table of number of cylinders
-table(cardata$`# of Cylinders and Rotors`)
+table(cardata_nonelectric$`# of Cylinders and Rotors`)
 ```
 
 We can see above that the number of cylinders and rotors is almost exclusively an even number, with values of $3$ and $5$ appearing some number of times.
 
 ```{r}
 # plot number of cylinders versus horsepower
-plot(cardata$`Rated Horsepower`, cardata$`# of Cylinders and Rotors`, xlab = 'Rated Horsepower', ylab = 'Number of Cylinders and Rotors', main = 'Number of Cylinders and Rotors vs. Rated Horsepower')
+plot(cardata_nonelectric$`Rated Horsepower`, cardata_nonelectric$`# of Cylinders and Rotors`, xlab = 'Rated Horsepower', ylab = 'Number of Cylinders and Rotors', main = 'Number of Cylinders and Rotors vs. Rated Horsepower')
 abline(a = 1, b = 1/75, col = 'red')
 ```
 
@@ -338,10 +389,10 @@ Above, we can see an approximation of the number of cylinders (`# of Cylinders a
 
 ```{r}
 # replace missing cylinder values with the approximation above
-for (i in 1:nrow(cardata)) {
-  if (is.na(cardata$`# of Cylinders and Rotors`[i])) {
-    val <- 1 + cardata$`Rated Horsepower`[i] / 75
-    cardata$`# of Cylinders and Rotors`[i] <- round(val / 2) * 2
+for (i in 1:nrow(cardata_nonelectric)) {
+  if (is.na(cardata_nonelectric$`# of Cylinders and Rotors`[i])) {
+    val <- 1 + cardata_nonelectric$`Rated Horsepower`[i] / 75
+    cardata_nonelectric$`# of Cylinders and Rotors`[i] <- round(val / 2) * 2
   }
 }
 ```
@@ -352,36 +403,53 @@ for (i in 1:nrow(cardata)) {
 
 Finally, let's move on to `RND_ADJ_FE`.
 
-```{r}
-# histogram of RND_ADJ_FE
-hist(cardata$RND_ADJ_FE, xlab = 'RND_ADJ_FE', main = 'Histogram of RND_ADJ_FE')
-```
-
-We can see that the distribution of `RND_ADJ_FE` is hidden by the outliers present in the data. Let's first replace those with missing values before proceeding.
+As we did above with the electric vehicles, let's observe a histogram of the `RND_ADJ_FE` variable for the non-electric vehicles. Remember, this variable expresses the number of miles per gallon for the vehicle.
 
 ```{r}
-# replace outliers with NA
-cardata$RND_ADJ_FE[cardata$RND_ADJ_FE > 2000] <- NA
-
-# re-view the histogram now
-hist(cardata$RND_ADJ_FE, xlab = 'RND_ADJ_FE', main = 'Histogram of RND_ADJ_FE', breaks = 40)
+# plot histogram of the electric car MPG values
+hist(cardata_nonelectric$RND_ADJ_FE, xlab = 'Miles per Gallon', main = 'Histogram of Miles per Gallon', breaks = 20)
 ```
 
-This variable is a bit ambiguous, so we will replace the missing values with the median of the existing values. The values are all focused around a values of approximately $0$ to $75$, so this feels to us as a safe decision to proceed with.
+We can see that there is at least one outlier on the high end of the distribution, expressing a value of 1000. We will replace these value(s) with missing values in order to obtain results that have more validity. We can then try to view the true distribution of values by constructing another histogram.
 
 ```{r}
-# replace missing values with median of existing values
-cardata$RND_ADJ_FE[is.na(cardata$RND_ADJ_FE)] <- median(cardata$RND_ADJ_FE, na.rm = TRUE)
+# replace high outliers with missing value
+cardata_nonelectric$RND_ADJ_FE[cardata_nonelectric$RND_ADJ_FE > 500] <- NA
+
+# plot histogram of the electric car MPG values
+hist(cardata_nonelectric$RND_ADJ_FE, xlab = 'Miles per Gallon', main = 'Histogram of Miles per Gallon', breaks = 20)
 ```
+
+We will perform the same task as before with the electric vehicles by replacing the missing values in this column with the *median* value of the distribution, as this is a safer way to do so without making any bold assumptions.
+
+```{r}
+# replace missing values with the median value
+cardata_nonelectric$RND_ADJ_FE[is.na(cardata_nonelectric$RND_ADJ_FE)] <- median(cardata_nonelectric$RND_ADJ_FE, na.rm = TRUE)
+```
+
+We can now observe the columns with missing values in the non-electric vehicle dataset and notice that we have cleaned it to our liking. Remember that we opted to keep the missing values for the `Aftertreatment Device Cd` and `Aftertreatment Device Desc` columns, as mentioned above.
+
+```{r}
+# print the proportions of NA values in each column using a threshold of 0%
+nonelectric_table <- calculate_proportions(cardata_nonelectric, 0)
+print_table(nonelectric_table)
+```
+
+-----
+
+### Final Look
 
 Let's take a look at the proportions of missing values now, as we have addressed them all (and kept some).
 
 ```{r}
-df_table <- calculate_proportions(cardata, 0)
-print_table(df_table)
+# print the proportions of NA values in each column
+electric_table <- calculate_proportions(cardata_electric, 0)
+nonelectric_table <- calculate_proportions(cardata_nonelectric, 0)
+print_table(electric_table)
+print_table(nonelectric_table)
 ```
 
-After addressing the missing values in the data, we find that we only have approximately **0.32%** of our data missing. This is a great improvement from the **15.64%** that we had initially and something that we can take with us as we look to analyze the data further.
+After addressing the missing values in the data, we find that we only have approximately **0.15%** of our data missing. This is a great improvement from the **15.64%** that we had initially and something that we can take with us as we look to analyze the data further.
 
 -----
 
@@ -390,5 +458,6 @@ After addressing the missing values in the data, we find that we only have appro
 Finally, we need to export this cleaned data so that we can use it in our analyses.
 
 ```{r}
-write.csv(cardata, '../data/cardata_clean.csv')
+write.csv(cardata_electric, '../data/cardata_electric_clean.csv')
+write.csv(cardata_nonelectric, '../data/cardata_nonelectric_clean.csv')
 ```

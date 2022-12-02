@@ -1,0 +1,498 @@
+---
+title: "ANLY 511 Final Project - T Tests"
+author: "Mia Mayerhofer"
+date: "2022-11-26"
+output: pdf_document
+---
+
+**Purpose:** Perform hypothesis testing, specifically t-tests, on the cleaned car data set to answer the following questions (*For non-electric vehicles only*): 
+
+1. Is there a significant difference in the amount of carbon dioxide emissions between types of fuel?
+    
+2. Is there a significant difference in the amount of carbon dioxide emissions between vehicle 
+    manufacturers?
+    
+3. Is there a significant difference in the amount of carbon dioxide emissions between vehicle transmission types?
+
+## Introduction to T-Tests
+
+T-Tests are a type of hypothesis testing that using a t-distribution when calculating probabilities in hopes to compare two population means. The steps of a t-test are highlighted below:
+
+1. A t-statistic is calculated from the populations' statistics. 
+
+2. A p-value is calculated based on the area below the t-distribution to the left or right of the calculated t-statistic. This is to calculate whether the mean of population 1 is less than or greater than the mean of population 2. 
+
+3. The p-value is compared to a significance level: 0.05, 0.01, and 0.001 are common chosen significance values. If the p-value is less than the significance level, the null hypothesis is rejected. On the other hand, if the p-value is greater than the significance value, we fail to reject the null hypothesis. 
+
+4. Additionally, a confidence interval is calculated for the difference between the means from the sample populations' statistics. 
+
+For two sample t-tests, which will be performed below, the key assumptions are that the variables are normally distributed and the two samples are random and independent of one another. If the normality assumption does not hold, the Mann-Whitney U test is most likely a better option for the hypothesis testing. For each test, we will check for normality.
+
+```{r, message = FALSE}
+# Load libraries
+library(dplyr)
+library(tidyverse)
+library(RColorBrewer)
+library(car)
+```
+
+## Data Preparation
+
+Below, the cleaned data set for only the *non-electric* vehicles will be read in. 
+
+```{r}
+# Load in the cleaned csv data for nonelectric vehicles
+gas <- read.csv("../data/cardata_nonelectric_clean.csv")
+# Remove index columns
+gas <- gas[,-1]
+# View the data
+head(gas)
+```
+
+## Exploratory Data Analysis (EDA) for Test 1
+
+**Research Question:** Is there a significant difference in the amount of carbon dioxide emissions between types of fuel?
+
+```{r}
+# Create color palettes
+Blues <- colorRampPalette(c("#0A146B", "#A9A3DA")) 
+Purples <- colorRampPalette(c("#3E1370", "#BDA3DA")) 
+GrBuPuPi <- c("#095826", "#0E7032", "#10913F", "#55A472", "#8CBF9E", "#8CBFB8", 
+              "#63B7AC", "#2D9A8B", "#137568", "#094E45", "#0B3C5C", "#17547C", 
+              "#2671A4", "#3C8CC1", "#72B1DB", "#96C3E1", "#B0CDE1", "#B0B3E1", 
+              "#858ACD", "#4F55AB", "#1923B3", "#0E1468", "#3C1075", "#5821A1", 
+              "#6B27C4", "#9455E5", "#A278D8", "#A990CA", "#ADA0BF", "#C1A5CB", 
+              "#B887CA", "#A35CBD", "#762594")
+```
+
+Which fuel type produces the most carbon dioxide emissions in this data set?
+
+```{r}
+# Calculate the mean CO2 emissions for each fuel type
+means_fuel <- gas %>% group_by(Test.Fuel.Type.Description) %>%
+  summarise_at(vars(CO2..g.mi.), list(name = mean))
+colnames(means_fuel) <- c("Fuel Type", "Mean CO2 Emissions")
+# Print means ordered by mean
+print(means_fuel[order(means_fuel$`Mean CO2 Emissions`, decreasing = TRUE),])
+```
+
+```{r}
+# Plot a barplot of the means
+means_fuel %>% ggplot(aes(x = `Fuel Type`, y = `Mean CO2 Emissions`, 
+                   fill = `Fuel Type`)) + 
+  geom_bar(stat = "identity", show.legend = FALSE) +
+  ggtitle("Mean CO2 Emissions for Different Fuel Types") + 
+  xlab("Fuel Type Description") + ylab("Mean Carbon Dioxide Emissions (g/mi)") +
+  theme(axis.text.x = element_text(angle = 55, vjust = 1, hjust=1)) + 
+  scale_fill_manual(values = GrBuPuPi)
+```
+
+From the barplot and table above, it is clear that Cold CO E10 Premium Gasoline (Tier 3) produces the most carbon dioxide emissions out of all the different fuel types followed by Cold CO Diesel7-15 ppm Sulfur and Tier 3 E10 Premium Gasoline (9 RVP Low Alt.). The fuel types with the lowest mean carbon dioxide emissions are Cold CO Regular (Tier 2), Tier 3 E10 Regular Gasoline (9 RVP Low Alt.), and CARB Phase II Gasoline. Below, we will plot the boxplots of each fuel type to view the distributions and outliers.
+
+```{r}
+names(gas)[names(gas) == 'Test.Fuel.Type.Description'] <- 'Fuel Type'
+gas %>% ggplot(aes(x = `Fuel Type`, y = CO2..g.mi., fill =`Fuel Type`)) +
+  geom_boxplot(show.legend = FALSE) + 
+  ggtitle("CO2 Emissions for Different Fuel Types") + 
+  xlab("Fuel Type Description") + ylab("Carbon Dioxide Emissions (g/mi)") +
+  theme(axis.text.x = element_text(angle = 55, vjust = 1, hjust=1)) +
+  scale_fill_manual(values = GrBuPuPi)
+```
+
+From the boxplots above, we can see that the mean carbon dioxide emissions varies depending on the fuel type. It is clear that some gasolines' mean carbon dioxide emissions differ more significantly than others. Tier 2 Cert Gasoline has the most outliers out of the fuel types. 
+
+How many observations are their for each type of fuel?
+
+```{r}
+# Create a frequency table
+frequencies <- data.frame(cbind(table(gas$`Fuel Type`)))
+frequencies$`Fuel Type` <- row.names(frequencies)   
+frequencies$`Frequency` <- frequencies$cbind.table.gas..Fuel.Type...
+frequencies <- frequencies %>% dplyr::select("Fuel Type", "Frequency")
+rownames(frequencies) <- NULL
+# Print table ordered by frequency
+frequencies[order(frequencies$Frequency, decreasing = TRUE),]
+```
+
+From the frequency table above, Tier 2 Cert Gasoline and Federal Cert Diesel 7-15 PPM Sulfur are the two most common gasoline types in the data set with 19,235 and 974 observations respectively.
+
+## Test 1
+
+Let us compare the mean emissions between the two most common fuel types in the data set. Below we will test to see if there are statistically significant difference in the mean emissions between Tier 2 Cert Gasoline and Federal Cert Diesel 7-15 PPM Sulfur. We will define the following null and alternative hypotheses:
+
+### Declaring Hypotheses and Significance Level
+
+$H_0:$ The mean carbon dioxide emissions is the same for Tier 2 Cert Gasoline and Federal Cert Diesel 7-15 PPM Sulfur.
+
+$H_a:$ The mean carbon dioxide emissions is greater for Federal Cert Diesel 7-15 PPM Sulfur than Tier 2 Cert Gasoline.
+
+**Significance Level:** 1% 
+
+### Checking Assumptions
+
+```{r}
+# Separate into two data frames filtered by each type
+tier2Cert <- gas %>% 
+  filter(`Fuel Type` == "Tier 2 Cert Gasoline")
+fedCertDieselSulfur <- gas %>% 
+  filter(`Fuel Type` == "Federal Cert Diesel 7-15 PPM Sulfur")
+```
+
+```{r, out.width = "80%"}
+# Population 1: Tier 2 Cert Gasoline
+qqPlot(tier2Cert$`CO2..g.mi.`, 
+       main = "Checking Normality of CO2 Emissions for 
+       Tier 2 Cert Gasoline", 
+       xlab = "Norm Quantiles", 
+       ylab = "CO2 Emissions (g/mi)")
+```
+
+```{r, out.width = "80%"}
+# Population 2: Federal Cert Diesel 7-15 PPM Sulfur
+qqPlot(fedCertDieselSulfur$`CO2..g.mi.`, 
+       main = "Checking Normality of CO2 Emissions for
+       Federal Cert Diesel 7-15 PPM Sulfur", 
+       xlab = "Norm Quantiles", 
+       ylab = "CO2 Emissions (g/mi)")
+```
+
+The QQ-plots show that the distribution of tier 2 cert gasoline carbon dioxide emissions is heavily skewed to the *right*, and the distribution of federal cert diesel carbon dioxide emissions is possibly *bimodal*. Thus, the normality assumption does not hold. Let us see if a log transformation normalizes the data: 
+
+```{r, out.width = "80%"}
+# Population 1: Tier 2 Cert Gasoline
+qqPlot(log(tier2Cert$`CO2..g.mi.`), 
+       main = "Checking Normality of log(CO2 Emissions) for
+       Tier 2 Cert Gasoline", 
+       xlab = "Norm Quantiles", 
+       ylab = "log(CO2 Emissions) (g/mi)")
+```
+
+```{r, out.width = "80%"}
+# Population 2: Federal Cert Diesel 7-15 PPM Sulfur
+qqPlot(log(fedCertDieselSulfur$`CO2..g.mi.`), 
+       main = "Checking Normality of log(CO2 Emissions) for
+       Federal Cert Diesel 7-15 PPM Sulfur", 
+       xlab = "Norm Quantiles", 
+       ylab = "log(CO2 Emissions) (g/mi)")
+# Shapiro Test
+shapiro.test(log(fedCertDieselSulfur$`CO2..g.mi.`))
+```
+
+From the QQ-plots above, it is clear that the log transformation normalized the tier 2 cert gasoline data, but not the federal cert diesel data. The shapiro test result with a p-value of less than 0.01 confirms this result that the log of the federal cert diesel emissions is not normal. Thus, we will perform a Mann-Whitney U Test without the log transformation.
+
+### Mann-Whitney U Test
+
+```{r}
+# Perform test
+mw.test1 <- wilcox.test(fedCertDieselSulfur$`CO2..g.mi.`, tier2Cert$`CO2..g.mi.`,
+                       na.rm = TRUE, paired = FALSE, exact = FALSE, conf.int = TRUE)
+mw.test1
+```
+
+**P-Value Analysis:** Based on the test results above, the p-value $= 2.134e-07 < 0.01$ which is statistically significant. Thus, we reject the null hypothesis and conclude that the mean carbon dioxide emissions is greater for Federal Cert Diesel 7-15 PPM Sulfur than Tier 2 Cert Gasoline. 
+
+**Confidence Interval Analysis:** From the 95% confidence interval, we can conclude with 95% confidence that Federal Cert Diesel 7-15 PPM Sulfur, on average, produces between 10.61379 g/mi and 23.05800 g/mi more CO2 emissions than Tier 2 Cert Gasoline for the sample of vehicles in the data set. 
+
+
+## Exploratory Data Analysis (EDA) for Test 2
+
+**Research Question:** Is there a significant difference in the amount of carbon dioxide emissions between vehicle manufacturers?
+
+Which manufacturer produces the most carbon dioxide emissions in this data set?
+
+```{r}
+# Calculate the mean CO2 emissions for each fuel type
+means_manufacturer <- gas %>% 
+  group_by(Vehicle.Manufacturer.Name) %>%
+  summarise_at(vars(CO2..g.mi.), list(name = mean))
+colnames(means_manufacturer) <- c("Manufacturer", "Mean CO2 Emissions")
+# Print means ordered by mean
+print(means_manufacturer[order(means_manufacturer$`Mean CO2 Emissions`, 
+                               decreasing = TRUE),])
+```
+
+```{r}
+# Plot a barplot of the means
+means_manufacturer %>% ggplot(aes(x = Manufacturer, 
+                                  y = `Mean CO2 Emissions`, 
+                                  fill = Manufacturer)) + 
+  geom_bar(stat = "identity", show.legend = FALSE) +
+  ggtitle("Mean CO2 Emissions for Different Manufacturers") + 
+  xlab("Manufacturer") + 
+  ylab("Mean Carbon Dioxide Emissions (g/mi)") +
+  theme(axis.text.x = element_text(angle = 55, 
+                                   vjust = 1, 
+                                   hjust=1)) +
+  scale_fill_manual(values = GrBuPuPi)
+```
+
+From the barplot and table above, the three manufacturers with the highest mean carbon dioxide emission in the data set are Lamborghini, Pagani Automobili S, and Bentley. The three manufacturers with the lowest mean carbon dioxide emission are Honda, Mitsubishi Motors Co, and EPA.
+
+Below, we will plot the boxplots of carbon dioxide emissions for each manufactuerer of *gas* vehicles to view the distributions and outliers.
+
+```{r}
+gas %>% ggplot(aes(x = Vehicle.Manufacturer.Name, 
+                   y = CO2..g.mi., 
+                   fill = Vehicle.Manufacturer.Name)) +
+  geom_boxplot(show.legend = FALSE) + 
+  ggtitle("CO2 Emissions for Different Gas Vehicle Manufacturers") + 
+  xlab("Manufacturer Name") + 
+  ylab("Carbon Dioxide Emissions (g/mi)") +
+  theme(axis.text.x = element_text(angle = 55, 
+                                   vjust = 1, 
+                                   hjust=1)) + 
+  scale_fill_manual(values = GrBuPuPi)
+```
+
+From the boxplots above, we can see that the mean carbon dioxide emissions varies greatly between manufacturers. It is clear that some manufacturers' mean carbon dioxide emissions differ more significantly than others. FCA US LLC, Mercedes-Benz, and Volkswagen Group contain outliers with higher carbon dioxide emissions.
+
+How many observations are their for each manufacturer?
+
+```{r}
+# Create a frequency table
+frequencies <- data.frame(cbind(table(gas$Vehicle.Manufacturer.Name)))
+frequencies$`Manufacturer` <- row.names(frequencies)   
+frequencies$`Frequency` <- frequencies$cbind.table.gas.Vehicle.Manufacturer.Name..
+frequencies <- frequencies %>% dplyr::select("Manufacturer", "Frequency")
+rownames(frequencies) <- NULL
+# Print table ordered by frequency
+frequencies[order(frequencies$Frequency, decreasing = TRUE),]
+```
+
+From the frequency table above, the two most common manufacturers are GM and Toyota. Let's look closer at the boxplots of just these two manufacturers:
+
+```{r}
+top2manufacturers <- gas[gas$Vehicle.Manufacturer.Name %in% c("GM", "Toyota"), ]
+top2manufacturers %>% ggplot(aes(x = Vehicle.Manufacturer.Name, 
+                                 y = CO2..g.mi., 
+                                 fill = Vehicle.Manufacturer.Name)) +
+  geom_boxplot(show.legend = FALSE) + 
+  ggtitle("CO2 Emissions for Different Gas Vehicle Manufacturers") + 
+  xlab("Manufacturer Name") + 
+  ylab("Carbon Dioxide Emissions (g/mi)") +
+  theme(axis.text.x = element_text(angle = 55, 
+                                   vjust = 1, 
+                                   hjust=1)) + 
+  scale_fill_manual(values = GrBuPuPi[c(5, 14, 20)])
+```
+
+
+## Test 2
+
+Let us compare the mean emissions between the two most common manufacturers in the data set: GM and Toyota. From the boxplot above, it appears that GM's mean carbon dioxide emission is higher than Toyota's, so we will test to see if this difference is significant below. We will define the following null and alternative hypotheses:
+
+### Declaring Hypotheses and Significance Level
+
+$H_0:$ The mean carbon dioxide emissions is the same for GM and Toyota gasoline vehicles.
+
+$H_a:$ The mean carbon dioxide emissions is greater for GM gasoline vehicles than Toyota gasoline vehicles. 
+
+**Significance Level:** 1% 
+
+### Checking Assumptions
+
+```{r}
+# Separate into two data frames filtered by each type
+GM <- gas %>% filter(Vehicle.Manufacturer.Name == "GM")
+Toyota <- gas %>% filter(Vehicle.Manufacturer.Name == "Toyota")
+```
+
+```{r, out.width = "80%"}
+# Population 1: GM
+qqPlot(GM$`CO2..g.mi.`, 
+       main = "Checking Normality of CO2 Emissions for GM", 
+       xlab = "Norm Quantiles", 
+       ylab = "CO2 Emissions (g/mi)")
+```
+
+```{r, out.width = "80%"}
+# Population 2: Toyota
+qqPlot(Toyota$`CO2..g.mi.`, 
+       main = "Checking Normality of CO2 Emissions for Toyota", 
+       xlab = "Norm Quantiles", 
+       ylab = "CO2 Emissions (g/mi)")
+```
+
+From the QQ-plots above, it is clear that both distributions are *not* normal. Thus, we will move forward with a Mann-Whitney U Test.
+
+### Mann-Whitney U Test
+
+```{r}
+# Perform test
+mw.test2 <- wilcox.test(GM$`CO2..g.mi.`, Toyota$`CO2..g.mi.`,
+                       na.rm = TRUE, paired = FALSE, 
+                       exact = FALSE, conf.int = TRUE)
+mw.test2
+```
+
+**P-Value Analysis:** Based on the test results above, the p-value $= 2.2e-16 < 0.01$ which is statistically significant. Thus, we reject the null hypothesis and conclude that the mean carbon dioxide emissions is greater for GM gasoline vehicles than Toyota gasoline vehicles.
+
+**Confidence Interval Analysis:** From the 95% confidence interval, we can conclude with 95% confidence that GM gasoline vehicles, on average, produce between 99.16565 g/mi and 106.32853 g/mi more CO2 emissions than Toyota gasoline vehicles for the sample of vehicles in the data set. 
+
+## Exploratory Data Analysis (EDA) for Test 3
+
+**Research Question:** Is there a significant difference in the amount of carbon dioxide emissions between vehicle transmission types?
+
+Which transmission type produces the most carbon dioxide emissions in this data set?
+
+```{r}
+# Calculate the mean CO2 emissions for each fuel type
+means_transmissions <- gas %>% 
+  group_by(Tested.Transmission.Type) %>%
+  summarise_at(vars(CO2..g.mi.), list(name = mean))
+colnames(means_transmissions) <- c("Transmission Type", "Mean CO2 Emissions")
+# Print means ordered by mean
+print(means_transmissions[order(means_transmissions$`Mean CO2 Emissions`, 
+                                decreasing = TRUE),])
+```
+
+```{r}
+# Plot a barplot of the means
+means_transmissions %>% ggplot(aes(x = `Transmission Type`, 
+                                   y = `Mean CO2 Emissions`, 
+                                   fill = `Transmission Type`)) + 
+  geom_bar(stat = "identity") +
+  ggtitle("Mean CO2 Emissions for Different Transmission Types") + 
+  xlab("Transmission Type") + 
+  ylab("Mean Carbon Dioxide Emissions (g/mi)") +
+  theme(axis.text.x = element_blank(), 
+        legend.position = "bottom", 
+        legend.text=element_text(size = 6)) + 
+  scale_fill_manual(values = GrBuPuPi[c(23,24,25,26,27,28,29,30)], 
+                    name = NULL) +
+  guides(fill=guide_legend(ncol = 2))
+```
+
+From the barplot and table above, we can see that the three transmission types with the highest mean carbon dioxide emissions are automatic, automated manual, and semi-automatic. The lowest three are selectable continuously variable, continuously variable, and other. Below, we will plot the boxplots of carbon dioxide emissions for each transmission type to view the distributions and outliers.
+
+```{r}
+names(gas)[names(gas) == 'Tested.Transmission.Type'] <- 'Transmission Type'
+gas %>% ggplot(aes(x = `Transmission Type`, 
+                   y = CO2..g.mi., 
+                   fill = `Transmission Type`)) +
+  geom_boxplot() + 
+  ggtitle("CO2 Emissions for Different Transmission Types") + 
+  xlab("Transmission Type") + 
+  ylab("Carbon Dioxide Emissions (g/mi)") +
+  theme(axis.text.x = element_blank(), 
+        legend.position = "bottom", 
+        legend.text=element_text(size = 6)) + 
+  scale_fill_manual(values = GrBuPuPi[c(23,24,25,26,27,28,29,30)], 
+                    name = NULL) +
+  guides(fill=guide_legend(ncol = 2))
+```
+
+From the boxplots above, we can see that the mean carbon dioxide emissions does not vary as much between transmission types as it did between manufacturer and fuel type. Many also contain several outliers that have higher carbon dioxide emissions. 
+
+## T-Test 3
+
+Let us compare the mean emissions between automatic cars and manual vehicles.
+
+### Declaring Hypotheses and Significance Level
+
+$H_0:$ The mean carbon dioxide emissions is the same for automatic and manual vehicles.
+
+$H_a:$ The mean carbon dioxide emissions is greater for automatic vehicles is higher than for manual vehicles. 
+
+**Significance Level:** 1% 
+
+### Checking Assumptions
+
+```{r}
+# Separate into two data frames filtered by each type
+automatic <- gas %>% filter(`Transmission Type` == "Automatic")
+manual <- gas %>% filter(`Transmission Type` == "Manual")
+```
+
+```{r, out.width = "80%"}
+# Population 1: automatic
+qqPlot(automatic$`CO2..g.mi.`, 
+       main = "Checking Normality of CO2 Emissions for 
+       Automatic Gas Vehicles", 
+       xlab = "Norm Quantiles", 
+       ylab = "CO2 Emissions (g/mi)")
+```
+
+```{r, out.width = "80%"}
+# Population 2: manual
+qqPlot(manual$`CO2..g.mi.`, 
+       main = "Checking Normality of CO2 Emissions for 
+       Manual Gas Vehicles", 
+       xlab = "Norm Quantiles", 
+       ylab = "CO2 Emissions (g/mi)")
+```
+
+Both distributions appear to be skewed to the right. Let us check if a log transformation is useful in normalizing the data.
+
+```{r, out.width = "80%"}
+# Population 1: automatic
+hist(log(automatic$`CO2..g.mi.`),
+main = "Checking Normality of log(CO2 Emissions)
+for Automatic Gas Vehicles", 
+xlab = "Norm Quantiles", ylab = "log(CO2 Emissions) (g/mi)", 
+col = GrBuPuPi[c(28)], breaks = 40)
+```
+
+```{r}
+data1 <- log(automatic$`CO2..g.mi.`)
+data1[!is.finite(data1)] <- NA
+shapiro.test(sample(data1, 5000))
+```
+
+```{r, out.width = "80%"}
+# Population 2: manual
+hist(log(manual$`CO2..g.mi.`),
+main = "Checking Normality of log(CO2 Emissions) 
+for Manual Gas Vehicles", 
+xlab = "Norm Quantiles", ylab = "log(CO2 Emissions) (g/mi)", 
+col = GrBuPuPi[c(31)], breaks = 40)
+```
+
+```{r}
+data2 <- log(manual$`CO2..g.mi.`)
+data2[!is.finite(data2)] <- NA
+shapiro.test(data2)
+```
+
+While the histograms show some improvement in normality from the log transformation, the Shapiro tests with very small p-values assert that the data still does not follow a normal distribution. Thus, we must move forward with a Mann-Whitney U Test. 
+
+### Mann-Whitney U Test
+
+```{r}
+# Perform test
+mw.test3 <- wilcox.test(automatic$`CO2..g.mi.`, manual$`CO2..g.mi.`,
+                       na.rm = TRUE, paired = FALSE, 
+                       exact = FALSE, conf.int = TRUE)
+mw.test3
+```
+
+**P-Value Analysis:** Based on the test results above, the p-value $= 2.2e-16 < 0.01$ which is statistically significant. Thus, we reject the null hypothesis and conclude that the mean carbon dioxide emissions is greater for automatic gasoline vehicles than manual gasoline vehicles.
+
+**Confidence Interval Analysis:** From the 95% confidence interval, we can conclude with 95% confidence that automatic gasoline vehicles, on average, produce between 38.75607 g/mi and 49.62847 g/mi more CO2 emissions than manual gasoline vehicles for the sample of vehicles in the data set. 
+
+This result shows that manual vehicles are more fuel efficient. This makes sense as manual vehicles are typically lighter and have a less complex engine set up.
+
+### References
+
+**1. R Color Codes:** 
+
+https://www.rapidtables.com/web/color/RGB_Color.html
+
+**2. Barplots:**
+
+http://www.sthda.com/english/wiki/ggplot2-barplots-quick-start-guide-r-software-and-data-visualization
+
+**3. Boxplots:** 
+
+http://www.sthda.com/english/wiki/ggplot2-box-plot-quick-start-guide-r-software-and-data-visualization
+
+**4. Legend Customization:**
+
+http://www.sthda.com/english/wiki/ggplot2-legend-easy-steps-to-change-the-position-and-the-appearance-of-a-graph-legend-in-r-software
+
+**5. ANLY 511 Lecture 10 Slides**
+
+**6. QQ-Plot Documentation:**
+
+https://braverock.com/brian/R/PerformanceAnalytics/html/chart.QQPlot.html
+

@@ -223,8 +223,65 @@ plot(emissions.model.3)
 
 Looking at the plots above, particularly the Residuals vs Fitted and the Scale-Location plots, we can see that linearity appears to be violated. Due to the parabola shape of the data, it is possible that quadratic regression could be a better fit for this data. 
 
+To see if a quadratic term could improve this model, I want to add a single regression term.
+
+Because the predictor with the highest influence on the model (largest F-statistic) is RND_ADJ_FE, or Miles per Gallon with an F-statistic of -174.250, I want to add a quadratic term for that predictor to see how this changes the model. 
+
+```{r}
+nonelectric$RND_ADJ_FE_2 = nonelectric$RND_ADJ_FE^2
+```
+
+```{r}
+set.seed(101)
+
+training.samples = nonelectric$CO2..g.mi. %>%
+  createDataPartition(p = 0.8, list = FALSE)
+
+training.data = nonelectric[training.samples,]
+testing.data = nonelectric[-training.samples, ]
+
+```
+
+Now, I am going to add the quadratic MPG term to Model 3 to create Model 4. 
+
+```{r}
+emissions.model.4 = lm(CO2..g.mi. ~ Model.Year.Cat + Test.Veh.Displacement..L. + Vehicle.Type + Rated.Horsepower + X..of.Cylinders.and.Rotors + Tested.Transmission.Type + X..of.Gears + Drive.System.Description + Equivalent.Test.Weight..lbs.. + Axle.Ratio + N.V.Ratio + Test.Fuel.Type.Description + THC..g.mi. + RND_ADJ_FE + Target.Coef.A..lbf. + Target.Coef.B..lbf.mph. + Target.Coef.C..lbf.mph..2. + Set.Coef.A..lbf. + Set.Coef.B..lbf.mph. + RND_ADJ_FE_2, data = training.data)
+```
+
+```{r}
+summary(emissions.model.4)
+```
 
 
+```{r}
+pred4 = emissions.model.4 %>% predict(testing.data)
+p4 = data.frame(
+  RMSE = RMSE(pred4, testing.data$CO2..g.mi.),
+  R2 = R2(pred4, testing.data$CO2..g.mi.)
+)
+```
 
+```{r}
+combined = rbind(p1, p2, p3, p4)
 
+combined = cbind(combined, c(summary(emissions.model)$fstatistic[1], summary(emissions.model.2)$fstatistic[1], summary(emissions.model.3)$fstatistic[1], summary(emissions.model.4)$fstatistic[1]))
+
+combined=cbind(combined, c(summary(emissions.model)$adj.r.squared, summary(emissions.model.2)$adj.r.squared, summary(emissions.model.3)$adj.r.squared, summary(emissions.model.4)$adj.r.squared))
+
+combined=cbind(combined,c(summary(emissions.model)$sigma,summary(emissions.model.2)$sigma, summary(emissions.model.3)$sigma, summary(emissions.model.4)$sigma))
+
+combined=cbind(combined, c("Model 1", "Model 2", "Model 3", "Model 4"))
+colnames(combined)[c(3,4,5,6)] = c("F-Statistic", "Adj R2", "RSE", "Model Name")
+```
+
+```{r}
+library(kableExtra)
+combined %>%
+  kbl() %>%
+  kable_classic(full_width = F, html_font = "Cambria")
+```
+
+As we can see in the model results, Model 4 appears to be a huge improvement in every way on the previous Model 3. However, when looking at the RMSE for Model 4, we can see that it is extremely large, suggesting that this quadratic regression is badly overfitting, and therefore is not a good predictor.
+
+Therefore, the best model is still the multiple linear regression model of Model 3. 
 

@@ -1,0 +1,164 @@
+---
+title: "511-LM"
+author: "Natalie Smith"
+date: "2022-12-02"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+In this section, we are going use multiple linear regression to determine which elements of a car's design (predictor variables $X_1$,$X_2$, ... , $X_n$) are good predictors of a car's $CO_2$ emissions (response variable $Y$).
+
+Since electric cars do not give off $CO_2$ emissions, I am going to start by reading in our cleaned non-electric, or fuel-based cars, dataset.
+
+```{r}
+setwd("..")
+getwd()
+nonelectric = read.csv("data/cardata_nonelectric_clean.csv")
+```
+
+```{r}
+library(caret)
+library(tidyverse)
+library(car)
+library(ISLR2)
+library(leaps)
+```
+
+Before splitting into training and testing, I want to ensure the predictor of model year can be considered as categorical for the regression model by adding a categorical column with the same data.
+
+```{r}
+dplyr::count(nonelectric, Model.Year, sort = TRUE)
+```
+
+```{r}
+nonelectric$Model.Year.Cat = as.character(nonelectric$Model.Year)
+```
+
+
+Now, I will split the data into training and testing with an 80/20 split. 
+
+```{r}
+set.seed(101)
+
+training.samples = nonelectric$CO2..g.mi. %>%
+  createDataPartition(p = 0.8, list = FALSE)
+
+training.data = nonelectric[training.samples,]
+testing.data = nonelectric[-training.samples, ]
+
+```
+ 
+```{r}
+dim(training.data)
+```
+
+```{r}
+dim(testing.data)
+```
+
+```{r}
+head(training.data)
+head(testing.data)
+```
+
+There are some initial unnecessary variables I want to remove before running the multiple linear regression model:
+- X (This is just an index)
+- Veh.Mfr.Code, Represented.Test.Veh.Make, Tested.Transmission.Type.Code, Drive.System.Code, and Aftertreatment.Device.Cd (We have the full name for all of these)
+- Police...Emergency.Vehicle (All "no's" throughout and doesn't apply to this dataset and what we are looking for at all)
+- Averaging.Method.Cd (This is just the way things are calculated rather than an actual metric - categorical)
+
+Additionally, we will need to leave out the two variables of Vehicle.Manufacturer.Name and Represented.Test.Veh.Model, which detail the make and model of each respective car. The reason we have to do this is that the multiple linear regression model is unable to predict emissions for makes and models of cars that appear in the testing set but not the training set, preventing the model from working. 
+
+Other than those columns, we are going to use everything else to try and predict a full model and will tweak based on results. 
+
+The following will be considered as categorical "dummy" variables in the model:
+- Model.Year
+- Vehicle.Type
+- Tested.Transmission.Type
+- Transmission.Lockup.
+- Drive.System.Description
+- Test.Fuel.Type.Description
+- Averaging.Method.Desc 
+
+
+```{r}
+emissions.model = lm(CO2..g.mi. ~ Model.Year.Cat + Test.Veh.Displacement..L. + Vehicle.Type + Rated.Horsepower + X..of.Cylinders.and.Rotors + Tested.Transmission.Type + X..of.Gears + Transmission.Lockup. + Drive.System.Description + Equivalent.Test.Weight..lbs.. + Axle.Ratio + N.V.Ratio + Test.Fuel.Type.Description + THC..g.mi. + CO..g.mi. + RND_ADJ_FE + DT.Inertia.Work.Ratio.Rating + DT.Absolute.Speed.Change.Ratg + Target.Coef.A..lbf. + Target.Coef.B..lbf.mph. + Target.Coef.C..lbf.mph..2. + Set.Coef.A..lbf. + Set.Coef.B..lbf.mph. + Set.Coef.C..lbf.mph..2. + Aftertreatment.Device.Desc, data = training.data)
+
+```
+
+
+```{r}
+options(max.print=999999)
+```
+
+```{r}
+summary(emissions.model)
+```
+
+Interestingly enough, aside from a few of the initial predictors, almost all of the predictors in the model appear to be significant in predicting emissions for a car. 
+
+However, it is very possible there may be multicollinearity in the current model, which occurs when at least two of the predictor variables in a model are highly correlated and result in redundancy, skewing the results and making the model unstable. 
+
+To detect the presence of multicollinearity, we can computer the variance inflation factor (VIF) score. 
+
+```{r}
+vif(emissions.model)
+```
+
+Typically, predictors that exceed 5 can be considered to be highly correlated with other predictors. Since we already have a lot of significant predictors, I will be extra conserative and remove the predictors of DT.Inertia.Work.Ratio.Rating and DT.Absolute.Speed.Change.Ratg from the model.
+
+Combining this with the predictors that did not meet the 0.05 significance level, the predictors I will be removing to create a more "tuned" model to compare to the original are:
+- DT.Inertia.Work.Ratio.Rating
+- DT.Absolute.Speed.Change.Ratg
+- Transmission.Lockup
+- CO..g.mi.
+
+(Note that if at least one dummy variable for a categorical variable is significant, I will keep all of them as a best practice.)
+
+
+```{r}
+emissions.model.2 = lm(CO2..g.mi. ~ Model.Year.Cat + Test.Veh.Displacement..L. + Vehicle.Type + Rated.Horsepower + X..of.Cylinders.and.Rotors + Tested.Transmission.Type + X..of.Gears + Drive.System.Description + Equivalent.Test.Weight..lbs.. + Axle.Ratio + N.V.Ratio + Test.Fuel.Type.Description + THC..g.mi. + RND_ADJ_FE + Target.Coef.A..lbf. + Target.Coef.B..lbf.mph. + Target.Coef.C..lbf.mph..2. + Set.Coef.A..lbf. + Set.Coef.B..lbf.mph. + Set.Coef.C..lbf.mph..2. + Aftertreatment.Device.Desc, data = training.data)
+```
+
+```{r}
+summary(emissions.model.2)
+```
+
+Now, I want to compare the metrics of the two models to determine which one can be used to best predict a car's emissions. 
+
+```{r}
+pred1 = emissions.model %>% predict(testing.data)
+p1 = data.frame(
+  RMSE = RMSE(pred1, testing.data$CO2..g.mi.),
+  R2 = R2(pred1, testing.data$CO2..g.mi.)
+)
+p1
+```
+```{r}
+combined = rbind(p1, p2)
+
+combined = cbind(combined, c(summary(emissions.model)$fstatistic[1], summary(emissions.model.2)$fstatistic[1]))
+
+combined=cbind(combined, c(summary(emissions.model)$adj.r.squared, summary(emissions.model.2)$adj.r.squared))
+
+combined=cbind(combined,c(summary(emissions.model)$sigma,summary(emissions.model.2)$sigma))
+
+combined=cbind(combined, c("Model 1", "Model 2"))
+colnames(combined)[c(3,4,5,6)] = c("F-Statistic", "Adj R^2", "RSE", "Model Name")
+
+
+```
+
+
+
+After selecting the best model:
+
+```{r}
+par(mfrow=c(2,2))
+plot(emissions.model)
+```
+
+

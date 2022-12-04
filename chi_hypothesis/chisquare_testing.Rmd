@@ -1,0 +1,233 @@
+---
+title: "Chi Squared Testing for Project"
+date: "`r Sys.Date()`"
+output:
+  rmdformats::robobook
+---
+
+# Read in Data
+
+```{r}
+
+# Read in electric car data
+e_df <- read.csv('../data/cardata_electric_clean.csv')
+
+# Read in non-electric car data
+ne_df <- read.csv('../data/cardata_nonelectric_clean.csv')
+
+(nrow(e_df))
+(nrow(ne_df))
+head(e_df)
+head(ne_df)
+```
+```{r}
+# Create color palettes
+Blues <- colorRampPalette(c("#0A146B", "#A9A3DA")) 
+Purples <- colorRampPalette(c("#3E1370", "#BDA3DA")) 
+GrBuPuPi <- c("#095826", "#0E7032", "#10913F", "#55A472", "#8CBF9E", "#8CBFB8", 
+              "#63B7AC", "#2D9A8B", "#137568", "#094E45", "#0B3C5C", "#17547C", 
+              "#2671A4", "#3C8CC1", "#72B1DB", "#96C3E1", "#B0CDE1", "#B0B3E1", 
+              "#858ACD", "#4F55AB", "#1923B3", "#0E1468", "#3C1075", "#5821A1", 
+              "#6B27C4", "#9455E5", "#A278D8", "#A990CA", "#ADA0BF", "#C1A5CB", 
+              "#B887CA", "#A35CBD", "#762594")
+```
+
+# EDA
+
+To formulate our hypotheses, we first perform EDA on the dataset
+
+```{r}
+#Vehicle.Manufacturer.Name
+#CO2..g.mi.
+library(ggplot2)
+library(tidyr)
+
+# Drop NAs for the emissions column
+ne_df <- ne_df %>% drop_na(CO2..g.mi.)
+
+ne_df$emission_cat[ne_df$CO2..g.mi. < 250] <- "low"
+ne_df$emission_cat[ne_df$CO2..g.mi. >= 250 & ne_df$CO2..g.mi. < 500] <- "medium"
+ne_df$emission_cat[ne_df$CO2..g.mi. >= 500] <- "high"
+
+head(ne_df)
+```
+```{r}
+# Make bar plot of transmission type and CO2 emissions
+ggplot(data=ne_df, aes(x=Vehicle.Manufacturer.Name,y=CO2..g.mi.))+geom_boxplot()+ scale_x_discrete(guide = guide_axis(angle = 45))
+```
+
+```{r}
+# make barplot of emissions categories
+
+ggplot(ne_df, aes(x=Vehicle.Manufacturer.Name, fill=emission_cat)) + geom_bar(position="dodge")+ scale_x_discrete(guide = guide_axis(angle = 45)) + scale_fill_manual(values = GrBuPuPi[c(5, 14, 20)])
+
+```
+
+
+We definitely see some car manufacturers have higher average fuel emissions. For instance, Lamborghini, Bentley, and Rolls-Royce have higher emissions likely due to them being luxury brands. Honda and Mitsubishi, on the other hand, are more affordable brands and have lower average emissions.
+
+```{r}
+# Make bar plot of transmission type and CO2 emissions
+ggplot(data=ne_df, aes(x=Tested.Transmission.Type,y=CO2..g.mi., fill=CO2..g.mi.))+geom_boxplot()+ scale_x_discrete(guide = guide_axis(angle = 45)) + scale_fill_manual(values = GrBuPuPi[c(1,5, 10, 16, 22, 27, 29, 30)])
+```
+
+```{r}
+ggplot(ne_df, aes(x=Tested.Transmission.Type, fill=emission_cat)) + geom_bar(position="dodge")+ scale_x_discrete(guide = guide_axis(angle = 45)) + scale_fill_manual(values = GrBuPuPi[c(5, 14, 20)])
+```
+Interestingly, it appears like the high emissions cars are mostly within the automatic and semi-automatic categories. Manual tends to have mostly low and medium with very few high emissions cars. 
+
+
+Drive system vs Emission category. Looks like 2 wheel drive front does not have high emissions compared to the 4 wheel drive and all wheel drive. Perhaps fuel emissions increase the more the wheel drive increases.
+
+```{r}
+ggplot(ne_df, aes(x=Drive.System.Description, fill=emission_cat)) + geom_bar(position="dodge")+ scale_x_discrete(guide = guide_axis(angle = 45)) + scale_fill_manual(values = GrBuPuPi[c(5, 14, 20)])
+```
+Next, check observe the transmission type vs the drive system type
+
+```{r}
+ggplot(ne_df, aes(fill=Drive.System.Description, x=Tested.Transmission.Type)) + geom_bar(position="dodge")+ scale_x_discrete(guide = guide_axis(angle = 45)) + scale_fill_manual(values = GrBuPuPi[c(1, 7, 15, 25, 32)])
+```
+
+
+# Define Hypotheses
+
+**Question 1:** Is there a relationship between car brand and fuel emission level? 
+
+Null hypothesis: Car Brand and fuel emissions level are independent. The fuel emissions level does not depend on the car brand
+
+Alternative Hypothesis: Car Brand and fuel emissions level are dependent. The fuel emissions level does depend on the car brand                                                                                          
+
+
+**Question 2:** Is there a relationship between transmission type and fuel emission level? 
+
+Null hypothesis: Transmission type and fuel emissions level are independent. The fuel emissions level does not depend on the transmission type
+
+Alternative Hypothesis: Transmission type and fuel emissions level are dependent. The fuel emissions level does depend on the Transmission type      
+
+
+**Question 3:** Is there a relationship between transmission type and the drive system type? 
+
+Null hypothesis: Transmission type and drive system type are independent. The transmission type does not depend on the drive system type
+
+Alternative Hypothesis: Transmission type and drive system type are dependent. The transmission type does depend on the drive system type      
+
+
+**Question 4:** Is there a relationship between drive system and the fuel emission level type? 
+
+Null hypothesis: Drive system and fuel emissions level are independent. The fuel emissions level does not depend on the drive system
+
+Alternative Hypothesis: Drive System and fuel emissions level are dependent. The fuel emissions level does depend on the drive system 
+
+
+
+# Hypothesis Testing
+
+```{r}
+head(ne_df)
+```
+
+## Question 1
+
+**Question 1:** Is there a relationship between car brand and fuel emission level? 
+
+Null hypothesis: Car Brand and fuel emissions level are independent. The fuel emissions level does not depend on the car brand
+
+Alternative Hypothesis: Car Brand and fuel emissions level are dependent. The fuel emissions level does depend on the car brand  
+ 
+```{r}
+# Make contingency table
+cont <- table(ne_df$Vehicle.Manufacturer.Name, ne_df$emission_cat)
+cont
+```
+```{r}
+chisq.test(cont)
+```
+
+Repeat test with the Yates correction
+```{r}
+chisq.test(cont, correct = TRUE)
+```
+
+Since the Yates correction was not enough, we can switch over to Fisher's Exact Test
+```{r}
+fisher.test(cont, simulate.p.value=TRUE)
+```
+
+## Question 2
+
+**Question 2:** Is there a relationship between transmission type and fuel emission level? 
+
+Null hypothesis: Transmission type and fuel emissions level are independent. The fuel emissions level does not depend on the transmission type
+
+Alternative Hypothesis: Transmission type and fuel emissions level are dependent. The fuel emissions level does depend on the Transmission type  
+
+```{r}
+# Make contingency table
+cont <- table(ne_df$Tested.Transmission.Type, ne_df$emission_cat)
+cont
+```
+
+```{r}
+chisq.test(cont)
+```
+
+Repeat test with the Yates correction
+```{r}
+chisq.test(cont, correct = TRUE)
+```
+
+Since the Yates correction was not enough, we can switch over to Fisher's Exact Test
+```{r}
+fisher.test(cont, simulate.p.value=TRUE)
+```
+
+## Question 3
+
+**Question 3:** Is there a relationship between transmission type and the drive system type? 
+
+Null hypothesis: Transmission type and drive system type are independent. The transmission type does not depend on the drive system type
+
+Alternative Hypothesis: Transmission type and drive system type are dependent. The transmission type does depend on the drive system type     
+
+```{r}
+# Make contingency table
+cont <- table(ne_df$Tested.Transmission.Type, ne_df$Drive.System.Description)
+cont
+```
+
+```{r}
+chisq.test(cont)
+```
+
+Repeat test with the Yates correction
+```{r}
+chisq.test(cont, correct = TRUE)
+```
+
+Since the Yates correction was not enough, we can switch over to Fisher's Exact Test
+```{r}
+fisher.test(cont, simulate.p.value=TRUE)
+```
+
+**Question 4:** Is there a relationship between drive system and the fuel emission level type? 
+
+Null hypothesis: Drive system and fuel emissions level are independent. The fuel emissions level does not depend on the drive system
+
+Alternative Hypothesis: Drive System and fuel emissions level are dependent. The fuel emissions level does depend on the drive system 
+
+```{r}
+# Make contingency table
+cont <- table(ne_df$Drive.System.Description, ne_df$emission_cat)
+cont
+```
+
+Repeat test with the Yates correction
+```{r}
+chisq.test(cont, correct = TRUE)
+```
+
+Since the Yates correction was not enough, we can switch over to Fisher's Exact Test
+```{r}
+fisher.test(cont, simulate.p.value=TRUE)
+```
+

@@ -25,6 +25,7 @@ library(tidyverse)
 library(car)
 library(ISLR2)
 library(leaps)
+library(RColorBrewer)
 ```
 
 Before splitting into training and testing, I want to ensure the predictor of model year can be considered as categorical for the regression model by adding a categorical column with the same data.
@@ -284,4 +285,5 @@ combined %>%
 As we can see in the model results, Model 4 appears to be a huge improvement in every way on the previous Model 3. However, when looking at the RMSE for Model 4, we can see that it is extremely large, suggesting that this quadratic regression is badly overfitting, and therefore is not a good predictor.
 
 Therefore, the best model is still the multiple linear regression model of Model 3. 
+
 

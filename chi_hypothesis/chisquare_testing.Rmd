@@ -58,7 +58,7 @@ ggplot(data=ne_df, aes(x=Vehicle.Manufacturer.Name,y=CO2..g.mi.))+geom_boxplot()
 ```{r}
 # make barplot of emissions categories
 
-ggplot(ne_df, aes(x=Vehicle.Manufacturer.Name, fill=emission_cat)) + geom_bar(position="dodge")+ scale_x_discrete(guide = guide_axis(angle = 45)) + scale_fill_manual(values = GrBuPuPi[c(5, 14, 20)])
+ggplot(ne_df, aes(x=Vehicle.Manufacturer.Name, fill=emission_cat)) + geom_bar(position="dodge")+ scale_x_discrete(guide = guide_axis(angle = 45)) + scale_fill_manual(values = GrBuPuPi[c(5, 14, 20)]) + labs(title = "Fuel Emission Categories by Manufacturer", x = "Manufacturer", y = "Count of Fuel Emission Category", fill = "Fuel Emission Category")
 
 ```
 
@@ -71,7 +71,7 @@ ggplot(data=ne_df, aes(x=Tested.Transmission.Type,y=CO2..g.mi., fill=CO2..g.mi.)
 ```
 
 ```{r}
-ggplot(ne_df, aes(x=Tested.Transmission.Type, fill=emission_cat)) + geom_bar(position="dodge")+ scale_x_discrete(guide = guide_axis(angle = 45)) + scale_fill_manual(values = GrBuPuPi[c(5, 14, 20)])
+ggplot(ne_df, aes(x=Tested.Transmission.Type, fill=emission_cat)) + geom_bar(position="dodge")+ scale_x_discrete(guide = guide_axis(angle = 45)) + scale_fill_manual(values = GrBuPuPi[c(5, 14, 20)]) + labs(title = "Fuel Emission Categories by Transmission Type", x = "Transmission Type", y = "Count of Fuel Emission Category", fill = "Fuel Emission Category")
 ```
 Interestingly, it appears like the high emissions cars are mostly within the automatic and semi-automatic categories. Manual tends to have mostly low and medium with very few high emissions cars. 
 
@@ -79,12 +79,12 @@ Interestingly, it appears like the high emissions cars are mostly within the aut
 Drive system vs Emission category. Looks like 2 wheel drive front does not have high emissions compared to the 4 wheel drive and all wheel drive. Perhaps fuel emissions increase the more the wheel drive increases.
 
 ```{r}
-ggplot(ne_df, aes(x=Drive.System.Description, fill=emission_cat)) + geom_bar(position="dodge")+ scale_x_discrete(guide = guide_axis(angle = 45)) + scale_fill_manual(values = GrBuPuPi[c(5, 14, 20)])
+ggplot(ne_df, aes(x=Drive.System.Description, fill=emission_cat)) + geom_bar(position="dodge")+ scale_x_discrete(guide = guide_axis(angle = 45)) + scale_fill_manual(values = GrBuPuPi[c(5, 14, 20)]) + labs(title = "Fuel Emission Categories by Drive System", x = "Drive System", y = "Count of Fuel Emission Category", fill = "Fuel Emission Category")
 ```
 Next, check observe the transmission type vs the drive system type
 
 ```{r}
-ggplot(ne_df, aes(fill=Drive.System.Description, x=Tested.Transmission.Type)) + geom_bar(position="dodge")+ scale_x_discrete(guide = guide_axis(angle = 45)) + scale_fill_manual(values = GrBuPuPi[c(1, 7, 15, 25, 32)])
+ggplot(ne_df, aes(fill=Drive.System.Description, x=Tested.Transmission.Type)) + geom_bar(position="dodge")+ scale_x_discrete(guide = guide_axis(angle = 45)) + scale_fill_manual(values = GrBuPuPi[c(1, 7, 15, 25, 32)]) + labs(title = "Drive System by Transmission Type", x = "Transmission Type", y = "Count of Drive System Type", fill = "Drive System Type")
 ```
 
 

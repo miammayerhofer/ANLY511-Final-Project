@@ -2,12 +2,37 @@
 title: "511-LM"
 author: "Natalie Smith"
 date: "2022-12-02"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
+## Linear Regression
+
+The goal of linear regression, in short, is to predict the value of a chosen response variable based on the value of another variable or variables, which are called "predictors". The equations of multiple linear regression models, which consider multiple predictor variables, take the following form:
+
+$Y = \beta_0 + \beta_1X_1 + \beta_2X_2 + ... + \beta_pX_p + \epsilon$, where $\epsilon$ represents the error present in the model.
+
+## Research Question
+
+1. Can the elements of a car's design be used to predict its $CO_2$ output?
+
+2. Which elements of a car's design are best at predicting $CO_2$ output?
+
+## Assumptions of Linear Regression
+
+1. Individual observations are independent from each other
+
+2. A linear relationship exists between the independent predictor variables $X_i$ and the dependent response variable $Y$
+
+3. Homoscedasticity, or homogeneity of variance
+
+4. The residuals of the model are normally distributed
+
 
 In this section, we are going use multiple linear regression to determine which elements of a car's design (predictor variables $X_1$,$X_2$, ... , $X_n$) are good predictors of a car's $CO_2$ emissions (response variable $Y$).
 
@@ -19,16 +44,15 @@ getwd()
 nonelectric = read.csv("data/cardata_nonelectric_clean.csv")
 ```
 
-```{r}
+```{r, warning=FALSE}
 library(caret)
 library(tidyverse)
 library(car)
 library(ISLR2)
 library(leaps)
-library(RColorBrewer)
 ```
 
-Before splitting into training and testing, I want to ensure the predictor of model year can be considered as categorical for the regression model by adding a categorical column with the same data.
+Before splitting into training and testing, I want to ensure the predictor of Model Year can be considered as categorical for the regression model by adding a categorical column with the same data to the dataset.
 
 ```{r}
 dplyr::count(nonelectric, Model.Year, sort = TRUE)
@@ -38,8 +62,7 @@ dplyr::count(nonelectric, Model.Year, sort = TRUE)
 nonelectric$Model.Year.Cat = as.character(nonelectric$Model.Year)
 ```
 
-
-Now, I will split the data into training and testing with an 80/20 split. 
+Next, the data will be split into training and testing datasets with an 80/20 split. 
 
 ```{r}
 set.seed(101)
@@ -65,7 +88,7 @@ head(training.data)
 head(testing.data)
 ```
 
-Checking for any missing values before I proceed with linear regression
+Next, it is important to check the data for any missing values before proceeding. 
 
 ```{r}
 colSums(is.na(training.data))
@@ -76,13 +99,13 @@ colSums(is.na(training.data))
 colSums(is.na(testing.data))
 ```
 
-Above, we can see that the Aftertreatment.Device.Cd and the Aftertreatment.Device.Desc have missing values. Because I do not want to drop these columns and we still have many rows in the dataset, I will remove these rows from the original dataset and run the train/test split again.
+Above, it can be seen that the Aftertreatment.Device.Cd and the Aftertreatment.Device.Desc have missing values. Because these columns may be significant in the model and because there are still many rows in the dataset, I will remove these rows from the original dataset and run the train/test split again.
 
 ```{r}
 nonelectric = nonelectric %>% drop_na()
 ```
 
-Now, re-doing the split before proceeding to the linear regression model. 
+Now, the split will be done again before proceeding to the linear regression model. 
 
 ```{r}
 set.seed(101)
@@ -96,18 +119,18 @@ testing.data = nonelectric[-training.samples, ]
 ```
 
 
-
-There are some initial unnecessary variables I want to remove before running the multiple linear regression model:
+There are some initial unnecessary variables that can be removed before running the multiple linear regression model:
 - X (This is just an index)
 - Veh.Mfr.Code, Represented.Test.Veh.Make, Tested.Transmission.Type.Code, Drive.System.Code, and Aftertreatment.Device.Cd (We have the full name for all of these)
 - Police...Emergency.Vehicle (All "no's" throughout and doesn't apply to this dataset and what we are looking for at all)
 - Averaging.Method.Cd (This is just the way things are calculated rather than an actual metric - categorical)
 
-Additionally, we will need to leave out the two variables of Vehicle.Manufacturer.Name and Represented.Test.Veh.Model, which detail the make and model of each respective car. The reason we have to do this is that the multiple linear regression model is unable to predict emissions for makes and models of cars that appear in the testing set but not the training set, preventing the model from working. 
+Additionally,  the two variables of Vehicle.Manufacturer.Name and Represented.Test.Veh.Model, which detail the make and model of each respective car, need to be left out. The reason for this is that the multiple linear regression model is unable to predict emissions for makes and models of cars that appear in the testing set but not the training set, preventing the model from working. 
 
-Other than those columns, we are going to use everything else to try and predict a full model and will tweak based on results. 
+Other than those columns, all other terms will be used predict a full model and will tweaked based on results for additional models. 
 
 The following will be considered as categorical "dummy" variables in the model:
+
 - Model.Year
 - Vehicle.Type
 - Tested.Transmission.Type
@@ -116,12 +139,12 @@ The following will be considered as categorical "dummy" variables in the model:
 - Test.Fuel.Type.Description
 - Averaging.Method.Desc 
 
+*Emissions Model 1: Full model with all columns as predictors*
 
 ```{r}
 emissions.model = lm(CO2..g.mi. ~ Model.Year.Cat + Test.Veh.Displacement..L. + Vehicle.Type + Rated.Horsepower + X..of.Cylinders.and.Rotors + Tested.Transmission.Type + X..of.Gears + Transmission.Lockup. + Drive.System.Description + Equivalent.Test.Weight..lbs.. + Axle.Ratio + N.V.Ratio + Test.Fuel.Type.Description + THC..g.mi. + CO..g.mi. + RND_ADJ_FE + DT.Inertia.Work.Ratio.Rating + DT.Absolute.Speed.Change.Ratg + Target.Coef.A..lbf. + Target.Coef.B..lbf.mph. + Target.Coef.C..lbf.mph..2. + Set.Coef.A..lbf. + Set.Coef.B..lbf.mph. + Set.Coef.C..lbf.mph..2. + Aftertreatment.Device.Desc, data = training.data)
 
 ```
-
 
 ```{r}
 options(max.print=999999)
@@ -141,16 +164,18 @@ To detect the presence of multicollinearity, we can computer the variance inflat
 vif(emissions.model)
 ```
 
-Typically, predictors that exceed 5 can be considered to be highly correlated with other predictors. Since we already have a lot of significant predictors, I will be extra conservative and remove the predictors of DT.Inertia.Work.Ratio.Rating and DT.Absolute.Speed.Change.Ratg from the model.
+Typically, predictors that exceed 5 can be considered to be highly correlated with other predictors. Since there are already many significant predictors, we will be extra conservative and remove the predictors of DT.Inertia.Work.Ratio.Rating and DT.Absolute.Speed.Change.Ratg from the model.
 
-Combining this with the predictors that did not meet the 0.05 significance level, the predictors I will be removing to create a more "tuned" model to compare to the original are:
+Combining this with the predictors that did not meet the 0.05 significance level, the predictors we will be removing to create a more "tuned" model to compare to the original are:
+
 - DT.Inertia.Work.Ratio.Rating
 - DT.Absolute.Speed.Change.Ratg
 - Transmission.Lockup
 - CO..g.mi.
 
-(Note that if at least one dummy variable for a categorical variable is significant, I will keep all of them as a best practice for now.)
+(Note that if at least one dummy variable for a categorical variable is significant, all of them will be kept as a best practice at this stage of model tuning.)
 
+*Emissions Model 2: Removing multicollinearity from model and initial insignificant terms*
 
 ```{r}
 emissions.model.2 = lm(CO2..g.mi. ~ Model.Year.Cat + Test.Veh.Displacement..L. + Vehicle.Type + Rated.Horsepower + X..of.Cylinders.and.Rotors + Tested.Transmission.Type + X..of.Gears + Drive.System.Description + Equivalent.Test.Weight..lbs.. + Axle.Ratio + N.V.Ratio + Test.Fuel.Type.Description + THC..g.mi. + RND_ADJ_FE + Target.Coef.A..lbf. + Target.Coef.B..lbf.mph. + Target.Coef.C..lbf.mph..2. + Set.Coef.A..lbf. + Set.Coef.B..lbf.mph. + Set.Coef.C..lbf.mph..2. + Aftertreatment.Device.Desc, data = training.data)
@@ -160,7 +185,9 @@ emissions.model.2 = lm(CO2..g.mi. ~ Model.Year.Cat + Test.Veh.Displacement..L. +
 summary(emissions.model.2)
 ```
 
-For my third and final model, I am going to remove the last of the insignificant variables below the 0.05 significance level, as well as those categorical variables where less than half of the dummy variables are significant. So, because of this, I will remove Set.Coef.C..lbf.mph..2.and also remove the categorical variable (and associated dummy variables) of Aftertreatment.Device.Desc.
+For the third and final model, we will remove the last of the insignificant variables below the 0.05 significance level, as well as those categorical variables where less than half of the dummy variables are significant. So, because of this, we will remove Set.Coef.C..lbf.mph..2.and also remove the categorical variable (and associated dummy variables) of Aftertreatment.Device.Desc.
+
+*Emissions Model 3: Removing all insignificant terms*
 
 ```{r}
 emissions.model.3 = lm(CO2..g.mi. ~ Model.Year.Cat + Test.Veh.Displacement..L. + Vehicle.Type + Rated.Horsepower + X..of.Cylinders.and.Rotors + Tested.Transmission.Type + X..of.Gears + Drive.System.Description + Equivalent.Test.Weight..lbs.. + Axle.Ratio + N.V.Ratio + Test.Fuel.Type.Description + THC..g.mi. + RND_ADJ_FE + Target.Coef.A..lbf. + Target.Coef.B..lbf.mph. + Target.Coef.C..lbf.mph..2. + Set.Coef.A..lbf. + Set.Coef.B..lbf.mph., data = training.data)
@@ -171,7 +198,7 @@ summary(emissions.model.3)
 ```
 
 
-Now, I want to compare the metrics of the three models to determine which one can be used to best predict a car's emissions. 
+Now, the metrics of the three models can be compared to determine which one can be used to best predict a car's $CO_2$ emissions. 
 
 ```{r}
 pred1 = emissions.model %>% predict(testing.data)
@@ -214,8 +241,7 @@ combined %>%
 
 Overall, the models seem to perform relatively equally, with Adjusted $R^2$ scores around 85% for all models. However, because Model 3 has the least number of predictor terms in the model, and knowing that the addition of predictor terms inflates the $R^2$, we can say that Model 3 is the best predictor of a car's emissions. 
 
-Finally, I want to check for any outliers or high leverage points in the chosen model. 
-
+Lastly, we want to check for any outliers or high leverage points in the chosen model. 
 
 ```{r}
 par(mfrow=c(2,2))
@@ -224,9 +250,9 @@ plot(emissions.model.3)
 
 Looking at the plots above, particularly the Residuals vs Fitted and the Scale-Location plots, we can see that linearity appears to be violated. Due to the parabola shape of the data, it is possible that quadratic regression could be a better fit for this data. 
 
-To see if a quadratic term could improve this model, I want to add a single regression term.
+To see if a quadratic term could improve this model, we will add single squared regression term to the predictor variables.
 
-Because the predictor with the highest influence on the model (largest F-statistic) is RND_ADJ_FE, or Miles per Gallon with an F-statistic of -174.250, I want to add a quadratic term for that predictor to see how this changes the model. 
+Because the predictor with the highest influence on the model (largest F-statistic) is RND_ADJ_FE, or Miles per Gallon, with an F-statistic of -174.250, we will add a quadratic term for this predictor to see if it improves the model. 
 
 ```{r}
 nonelectric$RND_ADJ_FE_2 = nonelectric$RND_ADJ_FE^2
@@ -243,7 +269,7 @@ testing.data = nonelectric[-training.samples, ]
 
 ```
 
-Now, I am going to add the quadratic MPG term to Model 3 to create Model 4. 
+*Emissions Model 4: Quadratic Regression Model*
 
 ```{r}
 emissions.model.4 = lm(CO2..g.mi. ~ Model.Year.Cat + Test.Veh.Displacement..L. + Vehicle.Type + Rated.Horsepower + X..of.Cylinders.and.Rotors + Tested.Transmission.Type + X..of.Gears + Drive.System.Description + Equivalent.Test.Weight..lbs.. + Axle.Ratio + N.V.Ratio + Test.Fuel.Type.Description + THC..g.mi. + RND_ADJ_FE + Target.Coef.A..lbf. + Target.Coef.B..lbf.mph. + Target.Coef.C..lbf.mph..2. + Set.Coef.A..lbf. + Set.Coef.B..lbf.mph. + RND_ADJ_FE_2, data = training.data)
@@ -282,8 +308,28 @@ combined %>%
   kable_classic(full_width = F, html_font = "Cambria")
 ```
 
+*Results*
+
 As we can see in the model results, Model 4 appears to be a huge improvement in every way on the previous Model 3. However, when looking at the RMSE for Model 4, we can see that it is extremely large, suggesting that this quadratic regression is badly overfitting, and therefore is not a good predictor.
 
 Therefore, the best model is still the multiple linear regression model of Model 3. 
+
+```{r}
+summary(emissions.model.3)
+```
+
+Looking again at the summary of Emissions Model 3, we can see that the top 3 predictors that hold the most weight in predicting a car's $CO_2$ based on respective t-values are:
+
+1. Miles per Gallon (RND_ADJ_FE): -174.25
+
+As the number of miles per gallon a car is able to achieve increases, its $CO_2$ emissions go down. 
+
+2. Total hydrocarbon emissions (THC..g.mi.): 35.12
+
+3. Electric Dynamometer Coefficient/mph (Target.Coef.B..lbf.mph.): 21.90
+
+(This is the measure of force, speed, and power required to operate the car being measured)
+
+As the total hydrocarbon emissions and the electric dynamometer coefficient increase, the $CO_2$ emissions produced by a car will also increase. 
 
 

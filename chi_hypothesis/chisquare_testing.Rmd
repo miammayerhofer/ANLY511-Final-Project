@@ -1,8 +1,7 @@
 ---
 title: "Chi Squared Testing for Project"
 date: "`r Sys.Date()`"
-output:
-  rmdformats::robobook
+output: pdf_document
 ---
 
 # Read in Data

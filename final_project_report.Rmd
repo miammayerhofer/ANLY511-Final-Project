@@ -1,0 +1,108 @@
+---
+title: "ANLY-511 Final Project Report"
+author: "ANLY-511-04 Group 3"
+date: "12/12/2022"
+output:
+  html_document: default
+---
+
+# Analyzing Relationships Between Car Design and Fuel Emissions
+
+**Authors**
+<ul>
+  <li>Mia Mayerhofer</li>
+  <li>Matt Moriarty</li>
+  <li>Natalie Smith</li>
+  <li>Madelyne Ventura</li>
+  <li>Linlin Wang</li>
+</ul>
+
+<br>
+
+## I. Introduction
+
+As the effects of climate change become more and more apparent and dire, it is important to analyze one of the top areas contributing to the greenhouse gas emissions polluting our atmosphere. According to the United States Environmental Protection Agency  (EPA), transportation, as a whole, contributed to 27% of greenhouse gas emissions in the United States in 2020 (see Figure 1). Despite the more widespread knowledge and use of electric vehicles, a surprising less than 1% of cars in the United States are electric according to Feilding Cage from Reuters Graphics. This is due to a variety of reasons some of which include costs, accessibility, hesitancy to new technologies, etc. Thus, the goal of this report will be to analyze which design aspects of non-electric (fuel-based) cars contribute to CO<sub>2</sub> emissions. The following research questions will be answered and analyzed further:
+
+<ol>
+  <li><i>Can we predict emissions based on other aspects of cars (weight, transmission types, etc)?</i></li>
+  <li><i>Is there a difference in the average CO<sub>2</sub> emissions depending on the different types of gasoline? Which type of gasoline is better for the environment?</i></li>
+  <li><i>Is there a difference in the average CO<sub>2</sub> emissions depending on the different car manufacturers? Which car manufacturer is better for the environment?</i></li>
+  <li><i>Is there a relationship between the brand of a car and fuel emissions? What about the relationship between sedan/SUV and fuel emissions?</i></li>
+  <li><i>How do car features (e.g., weight, transmission type) vary across the car manufacturers?</li>
+After the technical analyses, the final goal of the paper will be to describe the characteristics an environmentally-conscious consumer should be aware of when purchasing a non-electric vehicle in hopes to provide a more practical application of the results achieved through the report’s statistical analysis.</i></li>
+</ol>
+
+After the technical analyses, the final goal of the paper will be to describe the characteristics an environmentally-conscious consumer should be aware of when purchasing a non-electric vehicle in hopes to provide a more practical application of the results achieved through the report’s statistical analysis. 
+
+<span style="color:#ff0000;">ADD FIGURE 1 TO MARKDOWN</span>
+
+## II. Data
+
+#### Data Collection
+
+The data used in this report contains various fuel economy metrics over a wide range of vehicles and is collected from five excel spreadsheets published annually by the EPA. The EPA collected this data from two sources: the EPA National Vehicle and Fuel Emissions Laboratory and individual data submissions from various vehicle manufacturers.  The data is then combined for each year and sent to the Department of Energy (DOE), the Department of Transportation (DOT), and the Internal Revenue Service (IRS). For the initial data gathering, we chose the fuel economy reports for the years between 2018 and 2022, a five year span in total.
+
+### Data Cleaning
+
+After collecting our data, we recognized that there were some cleaning tasks to perform before proceeding with our analyses. In this section, we outline the steps that we took to clean the data in order to transition it to a state that suits our analyses below.
+
+#### Binding Datasets Together
+
+The first step that we took in our data cleaning process was to bind our individual datasets together into one. Fortunately, the datasets that we gathered between the years 2018 and 2022 all contained the same variables, just for different individual observations. As a result, we were easily able to bind all five datasets together into one single dataset, spanning from 2018 to 2022. Note that the shape of each individual dataset was approximately 4,500 rows by 67 columns, giving us a combined dataset of size 22,616 rows by 67 columns.
+
+#### Removing Unnecessary Variables
+
+The next step that we took in order to clean our dataset was removing variables that we felt were unnecessary for our analyses. These include variables such as the unique vehicle ID, the transmission overdrive code, and the vehicle configuration number, among others. In total, there were 21 variables that we removed in this process, leaving us with a dataset of size 22,616 rows by 46 columns.
+
+#### Partitioning the Dataset
+
+An additional step that we decided to take when cleaning our dataset was to partition the dataset into two distinct groups - one for electric vehicles and one for non-electric vehicles. We felt that this split was necessary in order to extract more specific information regarding non-electric vehicles, which comprised the vast majority of our data. Additionally, we felt that this split better-allowed us to identify trends that belong to one group or the other, but not both groups. For instance, we found that the CO2 emissions for vehicles often had missing values in our dataset, but revealed themselves to be missing only for electric vehicles. The partitioning of our dataset allowed us to uncover these relationships that we otherwise may have missed with our initial, single dataset. In any case, we referred to the `Test Fuel Type Description` when doing so, incorporating only those with `Electricity` or `Hydrogen 5` fuel types in our electric vehicles dataset. As a result, our dataset of shape 22,616 rows by 46 columns (`22,616, 46`) was partitioned into an electric vehicle dataset of shape 878 rows by 46 columns and a non-electric vehicle dataset of shape 21,738 rows by 46 columns.
+
+#### Address Missing Values
+
+As arguably the most important step of our data cleaning process, we addressed the missing values that were present in our two partitioned datasets. Note that the initial proportion of missing values across both datasets was approximately 15.64% and, as a result of our cleaning, we were able to drastically reduce this proportion to approximately 0.15%, more than a 99% reduction in missing values. In this subsection, we would like to point out the most important cleaning steps that we took here to address missing values.
+
+The first important step that we took was removing any column that had more than 10% of its values missing. This 10% threshold is rather arbitrary, but allows us to refrain from making any bold decisions when replacing missing values with legitimate ones. Especially given the size of our dataset, we felt that replacing several thousands of missing values would have a noticeable effect on the distributions of the variables experiencing this adjustment. Applying this technique independently to each dataset, we found that we were able to remove 17 variables from the electric vehicle dataset and 9 variables from the non-electric vehicle dataset. Note that CO2 emissions and fuel economy had more than 10% of their values missing in the electric vehicle dataset, but we opted to keep them due to their relevance in our analysis.
+
+When addressing the remaining columns containing missing values, all of which missing less than 10% of their values, we opted for a few techniques. Often, we visualized the distribution of values in order to gauge whether replacing missing values with the mean or median of existing values was sufficient. In most cases, we found that the distribution of existing values was not very symmetrical, and thus we replaced missing values with the median existing value of that variable. In other cases, such as those involving the `DT-Absolute`, `DT-Energy`, and `DT-Inertia` ratings, we found that replacing missing values with the mean existing value was sufficient, due to the symmetric distributions of those variables.
+
+Finally, one interesting technique that we employed when replacing missing values presented itself with the `Number of Cylinders and Rotors` variable. We first noted that this variable almost exclusively took on even integer values, such as 2, 4, 6, and 8. We also noticed that this variable was very related to the horsepower of the vehicle. As a result, we opted to perform a rough linear regression, using horsepower as the predictor variable and the number of cylinders and rotors as the response variable, in order to estimate the number of cylinders and rotors for vehicles missing that value. Note that there were no missing values regarding the horsepower of a vehicle. In this case, we created a rough linear association between the number of cylinders and rotors of a vehicle and that vehicle’s horsepower in order to estimate the number of cylinders and rotors of the vehicle, rounding to the nearest even integer. The scatterplot that visualizes this relationship can be found in FIGURE XY below.
+
+<span style="color:#ff0000;">ADD FIGURE XY TO MARKDOWN</span>
+
+## III. Exploratory Data Analysis (EDA)
+
+Exploratory Data Analysis is an important first step when conducting any type of statistical analysis as it allows one to gain familiarity with the data and its features. This section contains a collection of the EDA performed for each of the methods discussed below. 
+
+<span style="color:#ff0000;">ADD FIGURES 2 and 3 TO MARKDOWN</span>
+
+In Figure 2 the bar plot of the mean carbon dioxide emissions for the different fuel types highlights which fuel types tend to produce the most and the least emissions. Figure 3 provides the table with the exact values plotted in the barplot in Figure 2. The Cold CO E10 Premium Gasoline (Tier 3) had the highest mean carbon dioxide emissions at around 648 g/mi while the CARB Phase II Gasoline had the lowest mean carbon dioxide emissions at around 215 g/mi over the five year time span. It is important to note, however, that the fuel types showing the lowest mean carbon dioxide emissions are also not as common in the data set while the fuel types showing higher mean carbon dioxide emissions have significantly more observations. This may be seen in the frequency table below (Figure 4).
+
+<span style="color:#ff0000;">ADD FIGURE 4 TO MARKDOWN</span>
+
+In the boxplots shown in Figure 5, it is clear that some distributions of certain fuel types are significantly skewed with several outliers. It is important to be aware of these distributions for testing the assumptions of hypothesis tests later in the report. 
+
+For the t-test section, specifically, only the two most common fuel types in the data set will be compared as a two sample test will be conducted. Thus, the boxplots shown in figure 6 look closer at the distributions for these two most common fuel types: federal certified diesel 7-15 PPM sulfur and tier 2 certified gasoline. 
+
+<span style="color:#ff0000;">ADD FIGURES 6 and 7 TO MARKDOWN</span>
+
+The bar plot shown in Figure 7 highlights which vehicle manufacturers have the highest and lowest mean carbon dioxide emissions.  Figures 8 and 9 show the ten manufacturers with the highest mean carbon dioxide emissions and the ten manufacturers with the lowest mean carbon dioxide emissions during the five year time span.
+
+<span style="color:#ff0000;">ADD FIGURES 8 and 9 TO MARKDOWN</span>
+
+The three manufacturers with the highest mean carbon dioxide emission in the data set are Lamborghini, Pagani Automobili S, and Bentley. The three manufacturers with the lowest mean carbon dioxide emission are Honda, Mitsubishi Motors Co, and EPA. The box plots in figure 10 clearly show that many of the manufacturers present in the data set have outlier vehicles with higher carbon dioxide emissions. Many of the distributions are also skewed, mostly to the right. It is also clear that some manufacturers' mean carbon dioxide emissions differ more significantly than others.
+
+<span style="color:#ff0000;">ADD FIGURE 10 TO MARKDOWN</span>
+
+For the t-test section, specifically, only the two most common manufacturers in the data set will be compared as a two sample test will be conducted. Thus, the boxplots shown in figure 11 below look closer at the distributions for these two most common manufacturers: General Motors and Toyota.
+
+<span style="color:#ff0000;">ADD FIGURES 11 and 12 TO MARKDOWN</span>
+
+Figure 12 above shows a bar plot visualizing the mean carbon dioxide emissions over the five year time span for different vehicle transmission types such as manual, automatic, semi-automatic, etc. The frequency table in figure 13 provides the exact values for the mean carbon dioxide emissions. It is clear from the bar plot that automatic vehicles and derivatives of automatic vehicles tend to have higher mean emissions than manual vehicles and derivatives of manual vehicles. 
+
+<span style="color:#ff0000;">ADD FIGURE 13 TO MARKDOWN</span>
+
+In the boxplots shown in Figure 14, it is clear that some distributions of certain transmission types are significantly skewed with several outliers. It is important to be aware of these distributions for testing the assumptions of hypothesis tests later in the report. For the t-test section, specifically, only the general automatic and general manual data will be compared as a two sample test will be conducted. Thus, the boxplots shown in Figure 15 below look closer at the distributions for these two transmission types.
+
+<span style="color:#ff0000;">ADD FIGURES 14 and 15 TO MARKDOWN</span>
+

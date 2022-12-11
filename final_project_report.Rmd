@@ -6,7 +6,23 @@ output:
   html_document: default
 ---
 
-# DATA CLEANING CODE START
+# Analyzing Relationships Between Car Design and Fuel Emissions
+
+<center>
+**Authors**
+
+<table>
+  <tr>
+    <td>* Mia Mayerhofer</td>
+    <td>* Matt Moriarty</td>
+    <td>* Natalie Smith</td>
+    <td>* Madelyne Ventura</td>
+    <td>* Linlin Wang</td>
+  </tr>
+</table>
+</center>
+
+<br>
 
 ```{r echo = FALSE, message = FALSE, warning = FALSE}
 # load libraries for this assignment
@@ -120,27 +136,7 @@ cardata_nonelectric$`CO (g/mi)`[is.na(cardata_nonelectric$`CO (g/mi)`)] <- mean(
 cardata_nonelectric$`CO2 (g/mi)`[is.na(cardata_nonelectric$`CO2 (g/mi)`)] <- mean(cardata_nonelectric$`CO2 (g/mi)`, na.rm = TRUE)
 ```
 
-# DATA CLEANING CODE END
-
-# Analyzing Relationships Between Car Design and Fuel Emissions
-
-<center>
-**Authors**
-
-<table>
-  <tr>
-    <td>* Mia Mayerhofer</td>
-    <td>* Matt Moriarty</td>
-    <td>* Natalie Smith</td>
-    <td>* Madelyne Ventura</td>
-    <td>* Linlin Wang</td>
-  </tr>
-</table>
-</center>
-
-<br>
-
-## I. Introduction
+## 1 Introduction
 
 As the effects of climate change become more and more apparent and dire, it is important to analyze one of the top areas contributing to the greenhouse gas emissions polluting our atmosphere. According to the United States Environmental Protection Agency  (EPA), transportation, as a whole, contributed to 27% of greenhouse gas emissions in the United States in 2020 (see Figure 1). Despite the more widespread knowledge and use of electric vehicles, a surprising less than 1% of cars in the United States are electric according to Feilding Cage from Reuters Graphics. This is due to a variety of reasons some of which include costs, accessibility, hesitancy to new technologies, etc. Thus, the goal of this report will be to analyze which design aspects of non-electric (fuel-based) cars contribute to CO<sub>2</sub> emissions. The following research questions will be answered and analyzed further:
 
@@ -155,11 +151,17 @@ After the technical analyses, the final goal of the paper will be to describe th
 
 After the technical analyses, the final goal of the paper will be to describe the characteristics an environmentally-conscious consumer should be aware of when purchasing a non-electric vehicle in hopes to provide a more practical application of the results achieved through the report’s statistical analysis. 
 
-<span style="color:#ff0000;">ADD FIGURE 1 TO MARKDOWN</span>
+<center>
+![](figure1.png){width=30%}
+</center>
+
+<center><i><b>Figure 1</b></i></center>
 
 ## II. Data
 
-#### Data Collection
+In this section, we describe our data and explain the steps that we took in order to ensure that our data was prepared for use in our analyses.
+
+### Data Collection
 
 The data used in this report contains various fuel economy metrics over a wide range of vehicles and is collected from five excel spreadsheets published annually by the EPA. The EPA collected this data from two sources: the EPA National Vehicle and Fuel Emissions Laboratory and individual data submissions from various vehicle manufacturers.  The data is then combined for each year and sent to the Department of Energy (DOE), the Department of Transportation (DOT), and the Internal Revenue Service (IRS). For the initial data gathering, we chose the fuel economy reports for the years between 2018 and 2022, a five year span in total.
 
@@ -187,7 +189,7 @@ The first important step that we took was removing any column that had more than
 
 When addressing the remaining columns containing missing values, all of which missing less than 10% of their values, we opted for a few techniques. Often, we visualized the distribution of values in order to gauge whether replacing missing values with the mean or median of existing values was sufficient. In most cases, we found that the distribution of existing values was not very symmetrical, and thus we replaced missing values with the median existing value of that variable. In other cases, such as those involving the `DT-Absolute`, `DT-Energy`, and `DT-Inertia` ratings, we found that replacing missing values with the mean existing value was sufficient, due to the symmetric distributions of those variables.
 
-Finally, one interesting technique that we employed when replacing missing values presented itself with the `Number of Cylinders and Rotors` variable. We first noted that this variable almost exclusively took on even integer values, such as 2, 4, 6, and 8. We also noticed that this variable was very related to the horsepower of the vehicle. As a result, we opted to perform a rough linear regression, using horsepower as the predictor variable and the number of cylinders and rotors as the response variable, in order to estimate the number of cylinders and rotors for vehicles missing that value. Note that there were no missing values regarding the horsepower of a vehicle. In this case, we created a rough linear association between the number of cylinders and rotors of a vehicle and that vehicle’s horsepower in order to estimate the number of cylinders and rotors of the vehicle, rounding to the nearest even integer. The scatterplot that visualizes this relationship can be found in FIGURE XY below.
+Finally, one interesting technique that we employed when replacing missing values presented itself with the `Number of Cylinders and Rotors` variable. We first noted that this variable almost exclusively took on even integer values, such as 2, 4, 6, and 8. We also noticed that this variable was very related to the horsepower of the vehicle. As a result, we opted to perform a rough linear regression, using horsepower as the predictor variable and the number of cylinders and rotors as the response variable, in order to estimate the number of cylinders and rotors for vehicles missing that value. Note that there were no missing values regarding the horsepower of a vehicle. In this case, we created a rough linear association between the number of cylinders and rotors of a vehicle and that vehicle’s horsepower in order to estimate the number of cylinders and rotors of the vehicle, rounding to the nearest even integer. The scatterplot that visualizes this relationship can be found in Figure 2 below.
 
 ```{r echo = FALSE, fig.align = 'center'}
 # plot number of cylinders versus horsepower
@@ -195,7 +197,7 @@ plot(cardata_nonelectric$`Rated Horsepower`, cardata_nonelectric$`# of Cylinders
 abline(a = 1, b = 1/75, col = 'red')
 ```
 
-<center><i><b>Figure XY</b></i></center>
+<center><i><b>Figure 2</b></i></center>
 
 ```{r echo = FALSE}
 # replace missing cylinder values with the approximation above
@@ -217,8 +219,6 @@ cardata_nonelectric$RND_ADJ_FE[cardata_nonelectric$RND_ADJ_FE > 500] <- NA
 cardata_nonelectric$RND_ADJ_FE[is.na(cardata_nonelectric$RND_ADJ_FE)] <- median(cardata_nonelectric$RND_ADJ_FE, na.rm = TRUE)
 ```
 
-# T-TESTS CODE START
-
 ```{r echo = FALSE}
 # Create color palettes
 Blues <- colorRampPalette(c("#0A146B", "#A9A3DA")) 
@@ -231,16 +231,12 @@ GrBuPuPi <- c("#095826", "#0E7032", "#10913F", "#55A472", "#8CBF9E", "#8CBFB8",
               "#B887CA", "#A35CBD", "#762594")
 ```
 
-# T-TESTS CODE END
-
 ## III. Exploratory Data Analysis (EDA)
 
-Exploratory Data Analysis is an important first step when conducting any type of statistical analysis as it allows one to gain familiarity with the data and its features. This section contains a collection of the EDA performed for each of the methods discussed below. 
-
-<span style="color:#ff0000;">ADD FIGURES 2 and 3 TO MARKDOWN</span>
+Exploratory Data Analysis is an important first step when conducting any type of statistical analysis as it allows one to gain familiarity with the data and its features. This section contains a collection of the EDA performed for each of the methods discussed below.
 
 ```{r echo = FALSE, fig.align = 'center'}
-# FIGURE 2 CODE
+# FIGURE 3.1 CODE
 
 # Calculate the mean CO2 emissions for each fuel type
 means_fuel <- cardata_nonelectric %>% group_by(`Test Fuel Type Description`) %>%
@@ -258,22 +254,22 @@ means_fuel %>% ggplot(aes(x = `Fuel Type`, y = `Mean CO2 Emissions`,
   scale_fill_manual(values = GrBuPuPi)
 ```
 
-<center><i><b>Figure 2</b></i></center>
+<center><i><b>Figure 3.1</b></i></center>
 
 ```{r echo = FALSE, fig.align = 'center'}
-# FIGURE 3 CODE
+# FIGURE 3.2 CODE
 
 # sort means_fuel and report
 means_fuel <- means_fuel[order(-means_fuel$`Mean CO2 Emissions`),]
 print_table(means_fuel)
 ```
 
-<center><i><b>Figure 3</b></i></center>
+<center><i><b>Figure 3.2</b></i></center>
 
-In Figure 2 the bar plot of the mean carbon dioxide emissions for the different fuel types highlights which fuel types tend to produce the most and the least emissions. Figure 3 provides the table with the exact values plotted in the barplot in Figure 2. The Cold CO E10 Premium Gasoline (Tier 3) had the highest mean carbon dioxide emissions at around 648 g/mi while the CARB Phase II Gasoline had the lowest mean carbon dioxide emissions at around 215 g/mi over the five year time span. It is important to note, however, that the fuel types showing the lowest mean carbon dioxide emissions are also not as common in the data set while the fuel types showing higher mean carbon dioxide emissions have significantly more observations. This may be seen in the frequency table below (Figure 4).
+In Figure 3.1, the bar plot of the mean carbon dioxide emissions for the different fuel types highlights which fuel types tend to produce the most and the least emissions. Figure 3.2 provides the table with the exact values plotted in the barplot in Figure 2. The Cold CO E10 Premium Gasoline (Tier 3) had the highest mean carbon dioxide emissions at around 648 g/mi while the CARB Phase II Gasoline had the lowest mean carbon dioxide emissions at around 215 g/mi over the five year time span. It is important to note, however, that the fuel types showing the lowest mean carbon dioxide emissions are also not as common in the data set while the fuel types showing higher mean carbon dioxide emissions have significantly more observations. This may be seen in the frequency table below (Figure 3.3).
 
 ```{r echo = FALSE, fig.align = 'center'}
-# FIGURE 4 CODE
+# FIGURE 3.3 CODE
 
 # Create a frequency table
 frequencies <- data.frame(cbind(table(cardata_nonelectric$`Test Fuel Type Description`)))
@@ -286,14 +282,12 @@ frequencies <- frequencies[order(frequencies$Frequency, decreasing = TRUE),]
 print_table(frequencies)
 ```
 
-<center><i><b>Figure 4</b></i></center>
+<center><i><b>Figure 3.3</b></i></center>
 
-<span style="color:#ff0000;">ADD FIGURE 4 TO MARKDOWN</span>
-
-In the boxplots shown in Figure 5, it is clear that some distributions of certain fuel types are significantly skewed with several outliers. It is important to be aware of these distributions for testing the assumptions of hypothesis tests later in the report.
+In the boxplots shown in Figure 3.4, it is clear that some distributions of certain fuel types are significantly skewed with several outliers. It is important to be aware of these distributions for testing the assumptions of hypothesis tests later in the report.
 
 ```{r echo = FALSE, fig.align = 'center'}
-# FIGURE 5 CODE
+# FIGURE 3.4 CODE
 
 names(cardata_nonelectric)[names(cardata_nonelectric) == 'Test Fuel Type Description'] <- 'Fuel Type'
 cardata_nonelectric %>% ggplot(aes(x = `Fuel Type`, y = `CO2 (g/mi)`, fill =`Fuel Type`)) +
@@ -304,14 +298,12 @@ cardata_nonelectric %>% ggplot(aes(x = `Fuel Type`, y = `CO2 (g/mi)`, fill =`Fue
   scale_fill_manual(values = GrBuPuPi)
 ```
 
-<center><i><b>Figure 5</b></i></center>
+<center><i><b>Figure 3.4</b></i></center>
 
-<span style="color:#ff0000;">ADD FIGURE 5 TO MARKDOWN</span>
-
-For the t-test section, specifically, only the two most common fuel types in the data set will be compared as a two sample test will be conducted. Thus, the boxplots shown in figure 6 look closer at the distributions for these two most common fuel types: federal certified diesel 7-15 PPM sulfur and tier 2 certified gasoline.
+For the t-test section, specifically, only the two most common fuel types in the data set will be compared as a two sample test will be conducted. Thus, the boxplots shown in Figure 3.5 look closer at the distributions for these two most common fuel types: federal certified diesel 7-15 PPM sulfur and tier 2 certified gasoline.
 
 ```{r echo = FALSE, fig.align = 'center'}
-# FIGURE 6 CODE
+# FIGURE 3.5 CODE
 
 top2fueltypes <- cardata_nonelectric[cardata_nonelectric$`Fuel Type` %in% c("Federal Cert Diesel 7-15 PPM Sulfur",
                                             "Tier 2 Cert Gasoline"), ]
@@ -326,10 +318,10 @@ top2fueltypes %>% ggplot(aes(x = `Fuel Type`,
   scale_fill_manual(values = GrBuPuPi[c(5, 14, 20)])
 ```
 
-<center><i><b>Figure 6</b></i></center>
+<center><i><b>Figure 3.5</b></i></center>
 
 ```{r echo = FALSE, fig.align = 'center'}
-# FIGURE 7 CODE
+# FIGURE 3.6 CODE
 
 # Calculate the mean CO2 emissions for each fuel type
 means_manufacturer <- cardata_nonelectric %>% 
@@ -351,14 +343,12 @@ means_manufacturer %>% ggplot(aes(x = Manufacturer,
   scale_fill_manual(values = GrBuPuPi)
 ```
 
-<center><i><b>Figure 7</b></i></center>
+<center><i><b>Figure 3.6</b></i></center>
 
-<span style="color:#ff0000;">ADD FIGURES 6 and 7 TO MARKDOWN</span>
-
-The bar plot shown in Figure 7 highlights which vehicle manufacturers have the highest and lowest mean carbon dioxide emissions.  Figures 8 and 9 show the ten manufacturers with the highest mean carbon dioxide emissions and the ten manufacturers with the lowest mean carbon dioxide emissions during the five year time span.
+The bar plot shown in Figure 3.6 highlights which vehicle manufacturers have the highest and lowest mean carbon dioxide emissions.  Figures 3.7 and 3.8 show the ten manufacturers with the highest mean carbon dioxide emissions and the ten manufacturers with the lowest mean carbon dioxide emissions during the five year time span.
 
 ```{r echo = FALSE, fig.align = 'center'}
-# FIGURE 8 AND 9 CODE
+# FIGURE 3.7 AND 3.8 CODE
 
 # sort means_manufacturer and report
 means_manufacturer <- means_manufacturer[order(-means_manufacturer$`Mean CO2 Emissions`),]
@@ -373,14 +363,12 @@ combined <- cbind(top_10, bottom_10)
 print_table(combined)
 ```
 
-<center><i><b>Figure 8</b> (left) and <b>Figure 9</b> (right)</i></center>
+<center><i><b>Figure 3.7</b> (left) and <b>Figure 3.8</b> (right)</i></center>
 
-<span style="color:#ff0000;">ADD FIGURES 8 and 9 TO MARKDOWN</span>
-
-The three manufacturers with the highest mean carbon dioxide emission in the data set are Lamborghini, Pagani Automobili S, and Bentley. The three manufacturers with the lowest mean carbon dioxide emission are Honda, Mitsubishi Motors Co, and EPA. The box plots in figure 10 clearly show that many of the manufacturers present in the data set have outlier vehicles with higher carbon dioxide emissions. Many of the distributions are also skewed, mostly to the right. It is also clear that some manufacturers' mean carbon dioxide emissions differ more significantly than others.
+The three manufacturers with the highest mean carbon dioxide emission in the data set are Lamborghini, Pagani Automobili S, and Bentley. The three manufacturers with the lowest mean carbon dioxide emission are Honda, Mitsubishi Motors Co, and EPA. The box plots in Figure 3.9 clearly show that many of the manufacturers present in the data set have outlier vehicles with higher carbon dioxide emissions. Many of the distributions are also skewed, mostly to the right. It is also clear that some manufacturers' mean carbon dioxide emissions differ more significantly than others.
 
 ```{r echo = FALSE, fig.align = 'center'}
-# FIGURE 10 CODE
+# FIGURE 3.9 CODE
 
 cardata_nonelectric %>% ggplot(aes(x = `Vehicle Manufacturer Name`, 
                    y = `CO2 (g/mi)`, 
@@ -395,14 +383,12 @@ cardata_nonelectric %>% ggplot(aes(x = `Vehicle Manufacturer Name`,
   scale_fill_manual(values = GrBuPuPi)
 ```
 
-<center><i><b>Figure 10</b></i></center>
+<center><i><b>Figure 3.9</b></i></center>
 
-<span style="color:#ff0000;">ADD FIGURE 10 TO MARKDOWN</span>
-
-For the t-test section, specifically, only the two most common manufacturers in the data set will be compared as a two sample test will be conducted. Thus, the boxplots shown in figure 11 below look closer at the distributions for these two most common manufacturers: General Motors and Toyota.
+For the t-test section, specifically, only the two most common manufacturers in the data set will be compared as a two sample test will be conducted. Thus, the boxplots shown in Figure 3.10 below look closer at the distributions for these two most common manufacturers: General Motors and Toyota.
 
 ```{r echo = FALSE, fig.align = 'center'}
-# FIGURE 11 CODE
+# FIGURE 3.10 CODE
 
 top2manufacturers <- cardata_nonelectric[cardata_nonelectric$`Vehicle Manufacturer Name` %in% c("GM", "Toyota"), ]
 top2manufacturers %>% ggplot(aes(x = `Vehicle Manufacturer Name`, 
@@ -416,10 +402,10 @@ top2manufacturers %>% ggplot(aes(x = `Vehicle Manufacturer Name`,
   scale_fill_manual(values = GrBuPuPi[c(5, 14, 20)])
 ```
 
-<center><i><b>Figure 11</b></i></center>
+<center><i><b>Figure 3.10</b></i></center>
 
 ```{r echo = FALSE, fig.align = 'center'}
-# FIGURE 12 CODE
+# FIGURE 3.11 CODE
 
 # Calculate the mean CO2 emissions for each fuel type
 means_transmissions <- cardata_nonelectric %>% 
@@ -443,28 +429,24 @@ means_transmissions %>% ggplot(aes(x = `Transmission Type`,
   guides(fill=guide_legend(ncol = 2))
 ```
 
-<center><i><b>Figure 12</b></i></center>
+<center><i><b>Figure 3.11</b></i></center>
 
-<span style="color:#ff0000;">ADD FIGURES 11 and 12 TO MARKDOWN</span>
-
-Figure 12 above shows a bar plot visualizing the mean carbon dioxide emissions over the five year time span for different vehicle transmission types such as manual, automatic, semi-automatic, etc. The frequency table in figure 13 provides the exact values for the mean carbon dioxide emissions. It is clear from the bar plot that automatic vehicles and derivatives of automatic vehicles tend to have higher mean emissions than manual vehicles and derivatives of manual vehicles.
+Figure 3.11 above shows a bar plot visualizing the mean carbon dioxide emissions over the five year time span for different vehicle transmission types such as manual, automatic, semi-automatic, etc. The frequency table in Figure 3.12 provides the exact values for the mean carbon dioxide emissions. It is clear from the bar plot that automatic vehicles and derivatives of automatic vehicles tend to have higher mean emissions than manual vehicles and derivatives of manual vehicles.
 
 ```{r echo = FALSE, fig.align = 'center'}
-# FIGURE 13 CODE
+# FIGURE 3.12 CODE
 
 # sort means_fuel and report
 means_transmissions <- means_transmissions[order(-means_transmissions$`Mean CO2 Emissions`),]
 print_table(means_transmissions)
 ```
 
-<center><i><b>Figure 13</b></i></center>
+<center><i><b>Figure 3.12</b></i></center>
 
-<span style="color:#ff0000;">ADD FIGURE 13 TO MARKDOWN</span>
-
-In the boxplots shown in Figure 14, it is clear that some distributions of certain transmission types are significantly skewed with several outliers. It is important to be aware of these distributions for testing the assumptions of hypothesis tests later in the report. For the t-test section, specifically, only the general automatic and general manual data will be compared as a two sample test will be conducted. Thus, the boxplots shown in Figure 15 below look closer at the distributions for these two transmission types.
+In the boxplots shown in Figure 3.13, it is clear that some distributions of certain transmission types are significantly skewed with several outliers. It is important to be aware of these distributions for testing the assumptions of hypothesis tests later in the report. For the t-test section, specifically, only the general automatic and general manual data will be compared as a two sample test will be conducted. Thus, the boxplots shown in Figure 3.14 below look closer at the distributions for these two transmission types.
 
 ```{r echo = FALSE, fig.align = 'center'}
-# FIGURE 14 CODE
+# FIGURE 3.13 CODE
 
 names(cardata_nonelectric)[names(cardata_nonelectric) == 'Tested.Transmission.Type'] <- 'Transmission Type'
 cardata_nonelectric %>% ggplot(aes(x = `Tested Transmission Type`, 
@@ -482,10 +464,10 @@ cardata_nonelectric %>% ggplot(aes(x = `Tested Transmission Type`,
   guides(fill=guide_legend(ncol = 2))
 ```
 
-<center><i><b>Figure 14</b></i></center>
+<center><i><b>Figure 3.13</b></i></center>
 
 ```{r echo = FALSE, fig.align = 'center'}
-# FIGURE 15 CODE
+# FIGURE 3.14 CODE
 
 df <- cardata_nonelectric[cardata_nonelectric$`Tested Transmission Type` %in% c("Manual", "Automatic"), ]
 df %>% ggplot(aes(x = `Tested Transmission Type`,
@@ -499,9 +481,13 @@ df %>% ggplot(aes(x = `Tested Transmission Type`,
   scale_fill_manual(values = GrBuPuPi[c(5, 14, 20)])
 ```
 
-<span style="color:#ff0000;">ADD FIGURES 14 and 15 TO MARKDOWN</span>
+<center><i><b>Figure 3.14</b></i></center>
 
-## IV. Hypothesis Testing
+## IV. Statistical Methods
+
+In this section, we carry out the statistical methods that we used in our analysis. This is split into two sub-sections: Hypothesis Testing and Linear Regression. Our Hypothesis Testing methods incorporates several methods, including MANOVA, Chi-Squared Tests for Independence, and T-Tests.
+
+### Hypothesis Testing
 
 Hypothesis Testing is a field within statistics that is used to determine whether a group of collected observations support a hypothesis. When a particular trend is observed, such as the average of one group of observations being higher than another other, hypothesis testing can be used to determine whether the trend is statistically significant. There are various forms of hypothesis testing that can be performed and the tests utilized within this project will be outlined throughout the report.
 
@@ -519,36 +505,40 @@ We firstly perform the exploratory data analysis. According to the boxplot, we n
 * <i>H<sub>0</sub>: There is no significant difference in CO<sub>2</sub>, CO, and THC between the different types of vehicles.</i>
 * <i>H<sub>A</sub>: There is a significant difference in CO<sub>2</sub>, CO, and THC between the different types of vehicles.</i>
 
-We performed all four different MANOVA tests we mentioned above. From the below result table, We can see the p-values for all four different MANOVA tests are smaller than the significance level 0.05. So we reject the null hypothesis at 5% level of significance and conclude that there is significant difference in CO<sub>2</sub>, CO, and THC between different types of vehicles.
+We performed all four different MANOVA tests we mentioned above.In Table 4.1 below, we can see the p-values for all four different MANOVA tests are smaller than the significance level 0.05. So we reject the null hypothesis at 5% level of significance and conclude that there is significant difference in CO<sub>2</sub>, CO, and THC between different types of vehicles.
 
-Vehicle Type        Pillai's Trace         Hotelling-Lawley     Wilks       Roy
---------------      ---------------        -----------------    ---------   ---------
-Test Statistic      0.04618                0.048126             0.95395     0.044949
-P-Value             < 2.2e-16              < 2.2e-16            < 2.2e-16   < 2.2e-16
+```{r echo = FALSE, fig.align = 'center'}
+a <- c('Test Statistic', '0.04618', '0.048126', '0.95395', '0.044949')
+b <- c('P-Value', '< 2.2e-16', '< 2.2e-16', '< 2.2e-16', '< 2.2e-16')
 
-<center><i><b>Table 1</b></i></center>
+df <- rbind(a, b)
+colnames(df) <- c('Vehicle Type', "Pillai's Trace", 'Hotelling-Lawley', 'Wilks', 'Roy')
+print_table(df)
+```
 
-<span style="color:#ff0000;">ADD TABLE 1 TO MARKDOWN</span>
+<center><i><b>Table 4.1</b></i></center>
 
 The next test we performed is univariate ANOVAs to find out how exactly each emissions are affected by the type of vehicles. 
 
-* <i>Question 2: Is there a statistically significant difference in CO<sub>2</sub>, CO, and THC between vehicle manufactures?</i>
+* <i>Question 2: Is there a statistically significant difference in CO<sub>2</sub>, CO, and THC between vehicle manufacturers?</i>
 
 The hypothesis we used for research question 2 are:
 
-* <i>H<sub>0</sub>: There is no significant difference in CO<sub>2</sub>, CO, and THC between the different vehicle manufactures.</i>
-* <i>H<sub>A</sub>: There is a significant difference in CO<sub>2</sub>, CO, and THC between the different vehicle manufactures.</i>
+* <i>H<sub>0</sub>: There is no significant difference in CO<sub>2</sub>, CO, and THC between the different vehicle manufacturers.</i>
+* <i>H<sub>A</sub>: There is a significant difference in CO<sub>2</sub>, CO, and THC between the different vehicle manufacturers.</i>
 
-Performing Pillai’s Trace, Hotelling-Lawley, Wilks, and Roy separately give the following results. We will reject the null hypothesis at 5% level of significance since the p-values for four tests are extremely small.
+Performing Pillai’s Trace, Hotelling-Lawley, Wilks, and Roy separately give the following results, shown in Table 4.2. We will reject the null hypothesis at 5% level of significance since the p-values for four tests are extremely small.
 
-Vehicle Manufacturer      Pillai's Trace         Hotelling-Lawley     Wilks       Roy
-----------------------    ---------------        -----------------    ---------   ---------
-Test Statistic            0.22328                0.26919              0.78298     0.23569
-P-Value                   < 2.2e-16              < 2.2e-16            < 2.2e-16   < 2.2e-16
+```{r echo = FALSE, fig.align = 'center'}
+a <- c('Test Statistic', '0.22328', '0.26919', '0.78298', '0.23569')
+b <- c('P-Value', '< 2.2e-16', '< 2.2e-16', '< 2.2e-16', '< 2.2e-16')
 
-<center><i><b>Table 2</b></i></center>
+df <- rbind(a, b)
+colnames(df) <- c('Vehicle Manufacturer', "Pillai's Trace", 'Hotelling-Lawley', 'Wilks', 'Roy')
+print_table(df)
+```
 
-<span style="color:#ff0000;">ADD TABLE 2 TO MARKDOWN</span>
+<center><i><b>Table 4.2</b></i></center>
 
 Doing univariate ANOVAs again is to evaluate does vehicle manufactures has significant effect on all three emissions.
 
@@ -559,16 +549,18 @@ Our last research question for MANOVA is focusing on the independent variable fu
 * <i>H<sub>0</sub>: There is no significant difference in CO<sub>2</sub>, CO, and THC between fuel type.</i>
 * <i>H<sub>A</sub>: There is a significant difference in CO<sub>2</sub>, CO, and THC between fuel type.</i>
 
-According to the MANOVA results we performed, the p-values are significant since all of them are smaller than significance level. We can reject the null hypothesis, concluding that there is a significant difference in CO<sub>2</sub>, CO, and THC between fuel type as well.
+According to the MANOVA results we performed, the p-values are significant since all of them are smaller than significance level. We can reject the null hypothesis, concluding that there is a significant difference in CO<sub>2</sub>, CO, and THC between fuel type as well. These results can be seen below, in Table 4.3
 
-Fuel Type           Pillai's Trace         Hotelling-Lawley     Wilks       Roy
---------------      ---------------        -----------------    ---------   ---------
-Test Statistic      0.52439                0.9944               0.49279     0.95805
-P-Value             < 2.2e-16              < 2.2e-16            < 2.2e-16   < 2.2e-16
+```{r echo = FALSE, fig.align = 'center'}
+a <- c('Test Statistic', '0.52439', '0.9944', '0.49279', '0.95805')
+b <- c('P-Value', '< 2.2e-16', '< 2.2e-16', '< 2.2e-16', '< 2.2e-16')
 
-<center><i><b>Table 3</b></i></center>
+df <- rbind(a, b)
+colnames(df) <- c('Fuel Type', "Pillai's Trace", 'Hotelling-Lawley', 'Wilks', 'Roy')
+print_table(df)
+```
 
-<span style="color:#ff0000;">ADD TABLE 3 TO MARKDOWN</span>
+<center><i><b>Table 4.3</b></i></center>
 
 #### Chi-Squared Test of Independence
 
@@ -588,20 +580,22 @@ When performing exploratory data analysis, there appeared to be car manufacturer
 * <i>H<sub>0</sub>: There is no relationship between car manufacturer and fuel emission level; They are independent</i>
 * <i>H<sub>A</sub>: There is a relationship between car manufacturer and fuel emission level; They are dependent</i>
 
-The contingency table for this hypothesis shows categories with values close to zero. Figure 16 shows the contingency values for six car manufacturers out of over 30 manufacturers as an example contingency table. An underlying assumption of Chi-squared testing is that all of the expected values are at least five. When low expected values occur, the Yates Continuity Correction and Fisher’s Exact Test can be applied. Yates Continuity Correction is applied to the calculation of the Chi statistic and is used to compensate for the deviations from the theoretical probability (Giannini, 2005). Fisher’s Exact Test, on the other hand, is used when one or more of the cell counts in a contingency table is less than 5 and generally is better suited when dealing with small cell counts (Leon, 1998). Therefore, when conducting the hypothesis test for this question, both the Yates Continuity Correction and Fisher’s Exact Test were used.
+The contingency table for this hypothesis shows categories with values close to zero. Table 4.4 shows the contingency values for six car manufacturers out of over 30 manufacturers as an example contingency table. An underlying assumption of Chi-squared testing is that all of the expected values are at least five. When low expected values occur, the Yates Continuity Correction and Fisher’s Exact Test can be applied. Yates Continuity Correction is applied to the calculation of the Chi statistic and is used to compensate for the deviations from the theoretical probability (Giannini, 2005). Fisher’s Exact Test, on the other hand, is used when one or more of the cell counts in a contingency table is less than 5 and generally is better suited when dealing with small cell counts (Leon, 1998). Therefore, when conducting the hypothesis test for this question, both the Yates Continuity Correction and Fisher’s Exact Test were used.
 
-Car Manufacturer / Fuel Emission Level    Low         Medium     High
----------------------------------------   -----       -------    -------
-**Aston Martin**                          0           42         8
-**General Motors**                        569         1668       387
-**Honda**                                 878         567        0
-**Hyundai**                               548         661        15
-**Ferrari**                               0           211        61
-**Toyota**                                1517        864        91
+```{r echo = FALSE, fig.align = 'center'}
+a <- c('Aston Martin', '0', '42', '8')
+b <- c('General Motors', '569', '1668', '387')
+c <- c('Honda', '878', '567', '0')
+d <- c('Hyundai', '548', '661', '15')
+e <- c('Ferrari', '0', '211', '61')
+f <- c('Toyota', '1517', '864', '91')
 
-<center><i><b>Table 4</b></i></center>
+df <- rbind(a, b, c, d, e, f)
+colnames(df) <- c('Car Manufacturer vs. Fuel Emission Level', 'Low', 'Medium', 'High')
+print_table(df)
+```
 
-<span style="color:#ff0000;">ADD FIGURE 16 TO MARKDOWN</span>
+<center><i><b>Table 4.4</b></i></center>
 
 * <i>Question 2: Is there a relationship between drive system and fuel emission level?</i>
 
@@ -610,19 +604,21 @@ The next question analyzed was whether there was a relationship between drive sy
 * <i>H<sub>0</sub>: There is no relationship between drive system and fuel emission level; They are independent</i>
 * <i>H<sub>A</sub>: There is a relationship between drive system and fuel emission level; They are dependent</i>
 
-The full contingency table for drive system and fuel emission level is displayed in Figure 17. The table also contains instances where the cell values are smaller than five and thus the Yates Continuity Correction and Fisher’s Exact Test were implemented.
+The full contingency table for drive system and fuel emission level is displayed in Table 4.5. The table also contains instances where the cell values are smaller than five and thus the Yates Continuity Correction and Fisher’s Exact Test were implemented.
 
-Drive System / Fuel Emission Level    Low     Medium    High
------------------------------------   -----   -------   -------
-**Two-Wheel Drive, Front**            5332    3820      7
-**Two-Wheel Drive, Rear**             1603    6136      866
-**Four-Wheel Drive**                  78      536       197
-**All-Wheel Drive**                   643     2085      350
-**Part-Time Four-Wheel Drive**        2       81        1
+```{r echo = FALSE, fig.align = 'center'}
+a <- c('Two-Wheel Drive, Front', '5332', '3830', '7')
+b <- c('Two-Wheel Drive, Rear', '1603', '6136', '866')
+c <- c('Four-Wheel Drive', '78', '536', '197')
+d <- c('All-Wheel Drive', '643', '2085', '350')
+e <- c('Part-Time Four-Wheel Drive', '2', '81', '1')
 
-<center><i><b>Table 5</b></i></center>
+df <- rbind(a, b, c, d, e)
+colnames(df) <- c('Drive System vs. Fuel Emission Level', 'Low', 'Medium', 'High')
+print_table(df)
+```
 
-<span style="color:#ff0000;">ADD FIGURE 17 TO MARKDOWN</span>
+<center><i><b>Table 4.5</b></i></center>
 
 * <i>Question 3: Is there a relationship between transmission type and fuel emission level?</i>
 
@@ -631,22 +627,24 @@ The last question analyzed for Chi-squared testing was whether there was a relat
 * <i>H<sub>0</sub>: There is no relationship between transmission type and fuel emission level; They are independent</i>
 * <i>H<sub>A</sub>: There is a relationship between transmission type and fuel emission level; They are dependent</i>
 
-The full contingency table for drive system and fuel emission level is displayed in Figure 18. The table also contains instances where the cell values are smaller than five and thus the Yates Continuity Correction and Fisher’s Exact Test were implemented as well.
+The full contingency table for drive system and fuel emission level is displayed in Table 4.6. The table also contains instances where the cell values are smaller than five and thus the Yates Continuity Correction and Fisher’s Exact Test were implemented as well.
 
-Drive System / Fuel Emission Level        Low     Medium    High
-------------------------------------      -----   -------   -------
-**Automated Manual**                      255     430       79
-**Automated Manual-Selectable**           553     1115      151
-**Automatic**                             1411    4081      603
-**Continuously Variable**                 2168    671       0
-**Manual**                                634     932       72
-**Other**                                 4       0         0
-**Selectable Continuously Variable**      454     308       0
-**Semi-Automatic**                        2179    5122      516
+```{r echo = FALSE, fig.align = 'center'}
+a <- c('Two-Wheel Drive, Front', '255', '430', '79')
+b <- c('Two-Wheel Drive, Rear', '553', '1115', '151')
+c <- c('Four-Wheel Drive', '1411', '4081', '603')
+d <- c('All-Wheel Drive', '2168', '671', '0')
+e <- c('Part-Time Four-Wheel Drive', '634', '932', '72')
+f <- c('Four-Wheel Drive', '4', '0', '0')
+g <- c('All-Wheel Drive', '454', '308', '0')
+h <- c('Part-Time Four-Wheel Drive', '2179', '5112', '516')
 
-<center><i><b>Table 6</b></i></center>
+df <- rbind(a, b, c, d, e, f, g, h)
+colnames(df) <- c('Transmission System vs. Fuel Emission Level', 'Low', 'Medium', 'High')
+print_table(df)
+```
 
-<span style="color:#ff0000;">ADD FIGURE 18 TO MARKDOWN</span>
+<center><i><b>Table 4.6</b></i></center>
 
 #### T-Tests
 
@@ -664,7 +662,7 @@ From the exploratory data analysis, specifically the boxplots seen in figure 6, 
 The chosen significance level is 1%. The main assumption that must be verified is the normality of the samples.
 
 ```{r echo = FALSE, fig.align = 'center', fig.width = 10}
-# FIGURE 19 CODE
+# FIGURE 4.7 CODE
 
 # Separate into two data frames filtered by each type
 tier2Cert <- cardata_nonelectric %>% 
@@ -689,15 +687,13 @@ invisible(qqPlot(fedCertDieselSulfur$`CO2 (g/mi)`,
        ylab = "CO2 Emissions (g/mi)"))
 ```
 
-<center><i><b>Figure 19</b></i></center>
+<center><i><b>Figure 4.7</b></i></center>
 
-<span style="color:#ff0000;">ADD FIGURE 19 TO MARKDOWN</span>
-
-It is clear from the two QQ-plots above that the samples do not pass the normality assumption. A shapiro test for normality verifies this result with a significantly small p-value. One method of normalizing the data is a logarithmic transformation; however, this did not improve the normality unfortunately. Thus, a Mann Whitney U test will be performed in place of a standard two sample t-test. 
+It is clear from the two QQ-plots in Figure 4.7 above that the samples do not pass the normality assumption. A shapiro test for normality verifies this result with a significantly small p-value. One method of normalizing the data is a logarithmic transformation; however, this did not improve the normality unfortunately. Thus, a Mann Whitney U test will be performed in place of a standard two sample t-test. 
 
 * <i>Question 2: Is there a significant difference in the amount of carbon dioxide emissions between vehicle manufacturers, specifically between the two most common vehicle manufacturers in the data set: General Motors and Toyota?</i>
 
-From the exploratory data analysis, specifically the boxplots seen in figure 11, it appears that the mean carbon dioxide emission is greater for GM vehicles than Toyota vehicles. The test results will determine whether or not the difference is statistically significant. The following null and alternative hypotheses are defined:
+From the exploratory data analysis, specifically the boxplots seen in Figure 3.10, it appears that the mean carbon dioxide emission is greater for GM vehicles than Toyota vehicles. The test results will determine whether or not the difference is statistically significant. The following null and alternative hypotheses are defined:
 
 * <i>H<sub>0</sub>: The mean carbon dioxide emissions is the same for GM and Toyota gasoline vehicles.</i>
 * <i>H<sub>A</sub>: The mean carbon dioxide emission is greater for GM gasoline vehicles than Toyota vehicles.</i>
@@ -705,7 +701,7 @@ From the exploratory data analysis, specifically the boxplots seen in figure 11,
 The chosen significance level is 1%. The main assumption that must be verified is the normality of the samples.
 
 ```{r echo = FALSE, fig.align = 'center', fig.width = 10}
-# FIGURE 20 CODE
+# FIGURE 4.8 CODE
 
 # Separate into two data frames filtered by each type
 GM <- cardata_nonelectric %>% filter(`Vehicle Manufacturer Name` == "GM")
@@ -726,23 +722,21 @@ invisible(qqPlot(Toyota$`CO2 (g/mi)`,
        ylab = "CO2 Emissions (g/mi)"))
 ```
 
-<center><i><b>Figure 20</b></i></center>
+<center><i><b>Figure 4.8</b></i></center>
 
-<span style="color:#ff0000;">ADD FIGURE 20 TO MARKDOWN</span>
-
-Unfortunately, the same result is true for question 2: the samples are not normally distributed. A logarithmic transformation did not help to normalize both of the samples. Thus, another Mann-Whitney U test will be performed in place of a t-test to answer the question posed above.
+Unfortunately, the same result is true for question 2: the samples are not normally distributed. A logarithmic transformation did not help to normalize both of the samples. Thus, another Mann-Whitney U test will be performed in place of a t-test to answer the question posed above. QQ-plots expressing this relationship can be seen above in Figure 4.8.
 
 * <i>Question 3: Is there a significant difference in the amount of carbon dioxide emissions between vehicle transmission types, specifically between manual and automatic transmission vehicles?</i>
 
-From the exploratory data analysis, specifically the boxplots seen in figure 15, it appears that the mean emissions for automatic vehicles is greater than for manual vehicles. The test results will determine whether or not the difference is statistically significant. The following null and alternative hypotheses are defined:
+From the exploratory data analysis, specifically the boxplots seen in Figure 3.14, it appears that the mean emissions for automatic vehicles is greater than for manual vehicles. The test results will determine whether or not the difference is statistically significant. The following null and alternative hypotheses are defined:
 
 * <i>H<sub>0</sub>: The mean carbon dioxide emissions is the same for manual and automatic gasoline vehicles.</i>
 * <i>H<sub>A</sub>: The mean carbon dioxide emission is greater for automatic gasoline vehicles than manual gasoline vehicles.</i>
 
-The chosen significance level is 1%. The main assumption that must be verified is the normality of the samples. As with the other two tests, the normality assumption does not pass here as seen below in the QQ-plots; additionally, a logarithmic transformation does not improve the normality. Thus, a Mann-Whitney U test will be used again as a replacement for the t-test.
+The chosen significance level is 1%. The main assumption that must be verified is the normality of the samples. As with the other two tests, the normality assumption does not pass here as seen below in Figure 4.9; additionally, a logarithmic transformation does not improve the normality. Thus, a Mann-Whitney U test will be used again as a replacement for the t-test.
 
 ```{r echo = FALSE, fig.align = 'center', fig.width = 10}
-# FIGURE 21 CODE
+# FIGURE 4.9 CODE
 
 # Separate into two data frames filtered by each type
 automatic <- cardata_nonelectric %>% filter(`Tested Transmission Type` == "Automatic")
@@ -765,11 +759,9 @@ invisible(qqPlot(manual$`CO2 (g/mi)`,
        ylab = "CO2 Emissions (g/mi)"))
 ```
 
-<center><i><b>Figure 21</b></i></center>
+<center><i><b>Figure 4.9</b></i></center>
 
-<span style="color:#ff0000;">ADD FIGURE 21 TO MARKDOWN</span>
-
-## Linear Regression
+### Linear Regression
 
 In short, linear regression is a type of linear model that involves using a set of independent variables, or predictors, represented by Xi to predict a dependent variable, or response, represented by Y.  For this project, multiple linear regression, involving the use of multiple independent variables to predict a response, will be used to predict a car’s CO<sub>2</sub> emissions. Equations for multiple linear regression models take the following form, where ϵ represents the error present in the model:
 
@@ -799,7 +791,7 @@ Due to the fact that electric cars do not give off emissions, only fuel-based ca
 
 There are some initial unnecessary variables that were identified as either repetitive (an abbreviation of another column) or completely irrelevant to the regression model to predict CO2 emissions (index for the dataset and whether or not the car was a police vehicle or not.) Additionally, the two variables of Vehicle.Manufacturer.Name and Represented.Test.Veh.Model, which detail the make and model of each respective car, need to be left out. The reason for this is that the multiple linear regression model is unable to predict emissions for makes and models of cars that appear in the testing set but *not* in the training set. Other than these variables, all other terms will be used to predict a full model and will be tweaked based on results for additional models.
 
-The results of the first multiple linear regression model are pictured below, in Figure YY:
+The results of the first multiple linear regression model are pictured below, in Figure 4.10:
 
 ```
 Residual standard error: 42.4 on 17186 degrees of freedom
@@ -807,9 +799,7 @@ Multiple R-squared:  0.856,  Adjusted R-squared:  0.8555
 F-statistic:  2003 on 51 and 17186 DF,  p-value: < 2.2e-16
 ```
 
-<center><i><b>Figure 22</b></i></center>
-
-<span style="color:#ff0000;">ADD FIGURE YY TO MARKDOWN</span>
+<center><i><b>Figure 4.10</b></i></center>
 
 Interestingly enough, aside from a few of the initial predictors, almost all of the predictors in the model appear to be significant in predicting emissions for a car. However, it is very possible there may be multicollinearity in the current model, which occurs when at least two of the predictor variables in a model are highly correlated and result in redundancy, skewing the results and making the model unstable. To detect the presence of multicollinearity, the variance inflation factor (VIF) score can be computed. Typically, predictors that exceed 5.0 can be considered to be highly correlated with other predictors. Since there are already many significant predictors, we will be extra conservative and remove the predictors of DT Inertia Work Ratio Rating and DT Absolute Speed Change Rating from the model, which have VIF scores around 4.0. Combining this with the predictors that did not meet the 0.05% significance level, the predictors we will be removing to create a more “tuned” model to compare to the original are:
 
@@ -828,7 +818,7 @@ In terms of categorical variables, if at least one dummy variable for a categori
 
 * <i>Emissions Model 2: Removing multicollinearity from model and initial insignificant terms</i>
 
-The results of the second multiple linear regression model are pictured below, in Figure YY:
+The results of the second multiple linear regression model are pictured below, in Figure 4.11:
 
 ```
 Residual standard error: 42.64 on 17190 degrees of freedom
@@ -836,15 +826,13 @@ Multiple R-squared:  0.8543, Adjusted R-squared:  0.8539
 F-statistic:  2145 on 47 and 17190 DF,  p-value: < 2.2e-16
 ```
 
-<center><i><b>Figure 23</b></i></center>
-
-<span style="color:#ff0000;">ADD FIGURE YY TO MARKDOWN</span>
+<center><i><b>Figure 4.11</b></i></center>
 
 At this stage of model tuning, the last of the insignificant variables below the 0.05% significance level, as well as those categorical variables where less than half of the dummy variables are significant, will be removed. As a result, the variables Set.Coef.C..lbf.mph..2. (the measure of force, speed, and power required to operate a car divided by miles per hour) and Aftertreatment Device are removed for the final linear model.
 
 * <i>Emissions Model 3: Removing all insignificant terms</i>
 
-The results of the third multiple regression model are pictured below, in Figure YY:
+The results of the third multiple regression model are pictured below, in Figure 4.12:
 
 ```
 Residual standard error: 42.71 on 17196 degrees of freedom
@@ -852,9 +840,7 @@ Multiple R-squared:  0.8538, Adjusted R-squared:  0.8534
 F-statistic:  2449 on 41 and 17196 DF,  p-value: < 2.2e-16
 ```
 
-<center><i><b>Figure 24</b></i></center>
-
-<span style="color:#ff0000;">ADD FIGURE YY TO MARKDOWN</span>
+<center><i><b>Figure 4.12</b></i></center>
 
 Satisfied that this seems to be the best-performing model of the bunch when considering its reduced number of predictors, the next step is to check for any outliers or high leverage points present.
 
@@ -862,6 +848,8 @@ Satisfied that this seems to be the best-performing model of the bunch when cons
 # preparing the data for plot YY
 cardata_nonelectric$Model.Year.Cat = as.character(cardata_nonelectric$`Model Year`)
 cardata_nonelectric = cardata_nonelectric %>% drop_na()
+
+cardata_nonelectric$RND_ADJ_FE_2 = cardata_nonelectric$RND_ADJ_FE^2
 
 set.seed(101)
 training.samples = cardata_nonelectric$`CO2 (g/mi)` %>% createDataPartition(p = 0.8, list = FALSE)
@@ -871,26 +859,33 @@ testing.data = cardata_nonelectric[-training.samples, ]
 ```
 
 ```{r echo = FALSE, fig.align = 'center', fig.width = 10}
-# FIGURE XX CODE
+# FIGURE 4.13 CODE
+
+# matt running due to issue (ignore this)
+emissions.model = lm(`CO2 (g/mi)` ~ Model.Year.Cat + `Test Veh Displacement (L)` + `Vehicle Type` + `Rated Horsepower` + `# of Cylinders and Rotors` + `Tested Transmission Type` + `# of Gears` + `Transmission Lockup?` + `Drive System Description` + `Equivalent Test Weight (lbs.)` + `Axle Ratio` + `N/V Ratio` + `THC (g/mi)` + `CO (g/mi)` + `RND_ADJ_FE` + `DT-Inertia Work Ratio Rating` + `DT-Absolute Speed Change Ratg` + `Target Coef A (lbf)` + `Target Coef B (lbf/mph)` + `Target Coef C (lbf/mph**2)` + `Set Coef A (lbf)` + `Set Coef B (lbf/mph)` + `Set Coef C (lbf/mph**2)` + `Aftertreatment Device Desc`, data = training.data)
+
+# matt running due to issue (ignore this)
+emissions.model.2 = lm(`CO2 (g/mi)` ~ Model.Year.Cat + `Test Veh Displacement (L)` + `Vehicle Type` + `Rated Horsepower` + `# of Cylinders and Rotors` + `Tested Transmission Type` + `# of Gears` + `Drive System Description` + `Equivalent Test Weight (lbs.)` + `Axle Ratio` + `N/V Ratio` + `THC (g/mi)` + `RND_ADJ_FE` + `Target Coef A (lbf)` + `Target Coef B (lbf/mph)` + `Target Coef C (lbf/mph**2)` + `Set Coef A (lbf)` + `Set Coef B (lbf/mph)` + `Set Coef C (lbf/mph**2)` + `Aftertreatment Device Desc`, data = training.data)
 
 # matt running due to issue (ignore this)
 emissions.model.3 = lm(`CO2 (g/mi)` ~ Model.Year.Cat + `Test Veh Displacement (L)` + `Vehicle Type` + `Rated Horsepower` + `# of Cylinders and Rotors` + `Tested Transmission Type` + `# of Gears` + `Drive System Description` + `Equivalent Test Weight (lbs.)` + `Axle Ratio` + `N/V Ratio` + `THC (g/mi)` + `RND_ADJ_FE` + `Target Coef A (lbf)` + `Target Coef B (lbf/mph)` + `Target Coef C (lbf/mph**2)` + `Set Coef A (lbf)` + `Set Coef B (lbf/mph)`, data = training.data)
+
+# matt running due to issue (ignore this)
+emissions.model.4 = lm(`CO2 (g/mi)` ~ Model.Year.Cat + `Test Veh Displacement (L)` + `Vehicle Type` + `Rated Horsepower` + `# of Cylinders and Rotors` + `Tested Transmission Type` + `# of Gears` + `Drive System Description` + `Equivalent Test Weight (lbs.)` + `Axle Ratio` + `N/V Ratio` + `THC (g/mi)` + `RND_ADJ_FE` + `Target Coef A (lbf)` + `Target Coef B (lbf/mph)` + `Target Coef C (lbf/mph**2)` + `Set Coef A (lbf)` + `Set Coef B (lbf/mph)` + `RND_ADJ_FE_2`, data = training.data)
 
 par(mfrow=c(2,2))
 plot(emissions.model.3)
 ```
 
-<center><i><b>Figure 25</b></i></center>
+<center><i><b>Figure 4.13</b></i></center>
 
-<span style="color:#ff0000;">ADD FIGURE YY TO MARKDOWN</span>
-
-Looking at Figure YY, particularly the Residuals vs Fitted and the Scale-Location plots, it can be seen that the model appears to violate the assumption of linearity. Due to the parabola shape of the data, it is possible that a quadratic regression model, which finds the equation of the parabola that fits the data rather than the line, may be a better fit for this data. 
+Looking at Figure 4.13, particularly the Residuals vs Fitted and the Scale-Location plots, it can be seen that the model appears to violate the assumption of linearity. Due to the parabola shape of the data, it is possible that a quadratic regression model, which finds the equation of the parabola that fits the data rather than the line, may be a better fit for this data. 
 
 * <i>Emissions Model 4: Quadratic Regression Model</i>
 
 To see if quadratic regression could improve this model, a single squared regression term will be added to the predictor variables. Because the predictor with the highest influence on the model (or, largest F-statistic) is RND_ADJ_Fe, or miles per gallon, with an F-statistic of -174.25, a quadratic term for this predictor will be added to see if it improves the model.
 
-The results of the quadratic regression model are pictured below, in Figure YY:
+The results of the quadratic regression model are pictured below, in Figure 4.14:
 
 ```
 Residual standard error: 25.49 on 17195 degrees of freedom
@@ -898,24 +893,165 @@ Multiple R-squared:  0.9479, Adjusted R-squared:  0.9478
 F-statistic:  7454 on 42 and 17195 DF,  p-value: < 2.2e-16
 ```
 
-<center><i><b>Figure 25</b></i></center>
-
-<span style="color:#ff0000;">ADD FIGURE YY TO MARKDOWN</span>
+<center><i><b>Figure 4.14</b></i></center>
 
 The final conclusions on the best regression model to predict CO<sub>2</sub> emissions as well as the most influential aspects of a car’s design on emissions will be discussed in the Results section below.
 
-## Results
+## V. Results
 
-<span style="color:#ff0000;">ADD RESULTS TO MARKDOWN</span>
+In this section, we report the results of our statistical methods from section IV.
 
-#### MANOVA
+### MANOVA
 
-According to the result table of univariate ANOVAs below, the p-values for response CO<sub2</sub>, CO, and THC based on all three independent variables are all extremely small, which indicates that vehicle type, vehicle manufacturer, and fuel type have statistically significant effects on CO<sub>2</sub>, CO, and THC. 
+According to the result table of univariate ANOVAs below, the p-values for response CO<sub2</sub>, CO, and THC based on all three independent variables are all extremely small, which indicates that vehicle type, vehicle manufacturer, and fuel type have statistically significant effects on CO<sub>2</sub>, CO, and THC.
 
-Independent Variable      Response CO2 P-Value    Response CO P-Value    Response THC P-Value    Significant?
----------------------     ---------------------   --------------------   ---------------------   ------------- 
-Vehicle Type              < 2.2e-16               0.00166                3.751e-16               Yes
-Vehicle Manufacturer      < 2.2e-16               7.695e-05              < 2.2e-16               Yes
-Fuel Type                 < 2.2e-16               2.379e-16              < 2.2e-16               Yes
+```{r echo = FALSE, fig.align = 'center'}
+a <- c('Vehicle Type', '< 2.2e-16', '0.00166', '3.751e-16', 'Yes')
+b <- c('Vehicle Manufacturer', '< 2.2e-16', '7.695e-05', '< 2.2e-16', 'Yes')
+c <- c('Fuel Type', '< 2.2e-16', '2.379e-16', '< 2.2e-16', 'Yes')
 
+df <- rbind(a, b, c)
+colnames(df) <- c('Independent Variable', 'Response CO2 P-Value', 'Response CO P-Value', 'Response THC P-Value', 'Significant?')
+print_table(df)
+```
 
+### Chi-Squared Test of Independence
+
+The Chi-squared test for independence was conducted to test whether there was a relationship between fuel emission level and the following car features: car manufacturer, drive system type, and transmission type.  Figure X below summarizes the results for the three hypothesis questions and shows the p-values for their respective statistical tests (Chi-squared test of independence with Yates Continuity Correction, Fisher’s Exact Test).
+
+```{r echo = FALSE, fig.align = 'center'}
+a <- c('Question 1: Is there a relationship between car manufacturer and fuel emission level?', '< 2.2e-16', '< 4.9e-4', 'Yes')
+b <- c('Question 2: Is there a relationship between drive system and fuel emission level?', '< 2.2e-16', '< 4.9e-4', 'Yes')
+c <- c('Question 3: Is there a relationship between transmission type and fuel emission level?', '< 2.2e-16', '< 4.9e-4', 'Yes')
+
+df <- rbind(a, b, c)
+colnames(df) <- c('Hypothesis', 'Chi-Squared P-Value', "Fisher's P-Value", 'Reject Null Hypothesis?')
+print_table(df)
+```
+
+At a significance level of 0.05, all three sets of p-values are small enough to reject the null hypothesis in favor of the alternative hypothesis. Therefore, there is a relationship between each car feature mentioned above and the fuel emissions type. The car features and the fuel emissions type are dependent on each other.
+
+### T-Tests
+
+Mann-Whitney U tests were conducted in place of t-tests due to the failure of the normality assumption in all three cases. Figure X below summarizes the results for the three hypothesis questions by showing the p-values, whether or not the null hypothesis was rejected, the 95% confidence interval, and the final conclusion. As a point of reference, the significance level of 1% was chosen to compare the p-value to.
+
+```{r echo = FALSE, fig.align = 'center'}
+a <- c('Question 1: Is there a significant difference in the amount of CO2 emissions between the two most common fuel types: Tier 2 Cert Gasoline and Federal Cert Diesel 7-15 PPM Sulfur?', '2.1e-07', '[10.61379, 23.05800] g/mi', 'YES: Federal Cert Diesel 7-15 PPM Sulfur Emissions > Tier 2 Cert Gasoline Emissions')
+b <- c('Question 2: Is there a significant difference in the amount of CO<sub>2</sub> emissions between the two most common manufacturers: GM and Toyota?', '2.2e-16', '[94.60287, 106.32853] g/mi', 'YES: GM Emissions > Toyota Emissions')
+c <- c('Question 3: Is there a significant difference in the amount of CO<sub>2</sub> emissions between manual and automatic transmission vehicles?', '2.2e-16', '[38.75607, 49.62847] g/mi', 'YES: Automatic Transmission Emissions > Manual Transmissions Emissions')
+
+df <- rbind(a, b, c)
+colnames(df) <- c('Hypothesis', 'P-Value', "95% Confidence Interval", 'Reject Null / Conclusion')
+print_table(df)
+```
+
+Each of the three tests resulted in small p-values below the 1% significance level; thus, the null hypothesis is rejected for each of the questions.
+
+For question one, the conclusion is that the mean carbon dioxide emissions for Federal Certified Diesel 7-15 PPM Sulfur is significantly greater than the mean carbon dioxide emissions for Tier 2 Certified gasoline. With 95% confidence the Federal Certified Diesel 7-15 PPM Sulfur produces between 10.6 g/mi to 23.1 g/mi more carbon dioxide than Tier 2 Certified gasoline. 
+
+For question two, the conclusion is that the mean carbon dioxide emissions for GM gasoline vehicles is significantly greater than the mean carbon dioxide emissions for Toyota gasoline vehicles over the five year time span. With 95% confidence GM vehicles produce between 94.6 g/mi to 106.3 g/mi more carbon dioxide than Toyota vehicles on average. 
+
+For question three, the conclusion is that the mean carbon dioxide emissions for automatic gasoline vehicles is significantly greater than the mean carbon dioxide emissions for manual gasoline vehicles over the five year time span. With 95% confidence automatic vehicles produce between 34.8 g/mi to 49.6 g/mi more carbon dioxide than manual vehicles on average. 
+
+### Linear Regression
+
+The results for all four regression models tested to predict CO2 emissions are pictured below.
+
+```{r echo = FALSE}
+pred1 = emissions.model %>% predict(testing.data)
+p1 = data.frame(
+  RMSE = RMSE(pred1, testing.data$`CO2 (g/mi)`),
+  R2 = R2(pred1, testing.data$`CO2 (g/mi)`)
+)
+pred2 = emissions.model.2 %>% predict(testing.data)
+p2 = data.frame(
+  RMSE = RMSE(pred2, testing.data$`CO2 (g/mi)`),
+  R2 = R2(pred2, testing.data$`CO2 (g/mi)`)
+)
+pred3 = emissions.model.3 %>% predict(testing.data)
+p3 = data.frame(
+  RMSE = RMSE(pred3, testing.data$`CO2 (g/mi)`),
+  R2 = R2(pred3, testing.data$`CO2 (g/mi)`)
+)
+
+pred4 = emissions.model.4 %>% predict(testing.data)
+p4 = data.frame(
+  RMSE = RMSE(pred4, testing.data$`CO2 (g/mi)`),
+  R2 = R2(pred4, testing.data$`CO2 (g/mi)`)
+)
+```
+
+```{r echo = FALSE}
+combined = rbind(p1, p2, p3, p4)
+
+combined = cbind(combined, c(summary(emissions.model)$fstatistic[1], summary(emissions.model.2)$fstatistic[1], summary(emissions.model.3)$fstatistic[1], summary(emissions.model.4)$fstatistic[1]))
+
+combined=cbind(combined, c(summary(emissions.model)$adj.r.squared, summary(emissions.model.2)$adj.r.squared, summary(emissions.model.3)$adj.r.squared, summary(emissions.model.4)$adj.r.squared))
+
+combined=cbind(combined,c(summary(emissions.model)$sigma,summary(emissions.model.2)$sigma, summary(emissions.model.3)$sigma, summary(emissions.model.4)$sigma))
+
+combined=cbind(combined, c("Model 1", "Model 2", "Model 3", "Model 4"))
+colnames(combined)[c(3,4,5,6)] = c("F-Statistic", "Adj R2", "RSE", "Model Name")
+
+combined = combined[, c(6, 1, 2, 3, 4, 5)]
+```
+
+```{r echo = FALSE, fig.align = 'center'}
+# FIGURE XX CODE
+
+print_table(combined)
+
+# library(kableExtra)
+# combined %>%
+  # kbl() %>%
+  # kable_classic(full_width = F, html_font = "Cambria")
+```
+
+As can be seen in the model results, the quadratic regression model, Model 4, appears to be a huge improvement in every way on the best linear regression model, Model 3. However, the RMSE for Model 4 is extremely large, suggesting that this quadratic regression is badly overfitting, and therefore is not a good predictor of CO2 emissions. As a result, the best model is still the multiple linear regression model of Model 3.
+
+The top three predictors that have the most influence on the predicting a car’s CO2 emissions based on their respective t-values are:
+
+<ol>
+  <li>Miles per gallon (RND_ADJ_FE), with a t-value of -174.25, suggesting that as the number of miles per gallon a car is able to achieve increases, its CO2 emissions decreases.</li>
+  <li>Total hydrocarbon emissions (THC..g.mi.), with a t-value of 35.12</li>
+  <li>Electric Dynamometer Coefficient/mph (Target.Coef.B..lbf.mph.), with a t-value of 21.90. This predictor is the measure of force, speed, and power required to operate the car being measured.</li>
+</ol>
+
+As the total hydrocarbon emissions and the electric dynamometer coefficient increase, the CO2 emissions produced by a car will also increase.
+
+## VI. Conclusion
+	
+The results highlighted in this report could provide helpful insights for those debating which vehicle to purchase, specifically if they do not have the ability to purchase an electric vehicle. Most importantly, vehicles with a higher fuel economy (miles per gallon) produce fewer emissions on average. Additionally, vehicles that accept fuel types such as Tier 2 Certified gasoline and Carbon Phase II also produce fewer carbon dioxide emissions on average compared to Federal Certified Diesel fuel for example. Surprisingly, manual vehicles produced significantly fewer mean carbon dioxide emissions over the five year time span compared to vehicles with automatic transmission. Finally, a clear relationship was found between the manufacturer and the mean carbon dioxide emissions; thus, some manufacturers that appear to be more environmentally-friendly include Mazda, Toyota, Honda, and Mitsubishi. 
+
+In conclusion, statistical analysis including hypothesis testing and regression analysis yields useful results in analyzing the relationships between various aspects of vehicle design and greenhouse gas emissions. Due to electric vehicles still being relatively inaccessible and expensive for the general public, it will be important in the coming years for vehicle manufacturers to continuously improve their designs for fuel-based vehicles to produce fewer emissions. 
+
+## VII. References
+
+<ul>
+  <li>Cage, Feilding. “The Long Road to Electric Cars in the U.S.” Reuters, Thomson Reuters, https://www.reuters.com/graphics/AUTOS-ELECTRIC/USA/mopanyqxwva/.</li>
+  <li>“Data on Cars Used for Testing Fuel Economy.” EPA, Environmental Protection Agency, https://www.epa.gov/compliance-and-fuel-economy-data/data-cars-used-testing-fuel-economy.</li>
+  <li>“GGPLOT2 Barplots : QUICK START GUIDE - R Software and Data Visualization.” STHDA, http://www.sthda.com/english/wiki/ggplot2-barplots-quick-start-guide-r-software-and-data-visualization.</li>
+  <li>“GGPLOT2 Box Plot : Quick Start Guide - R Software and Data Visualization.” STHDA, http://www.sthda.com/english/wiki/ggplot2-box-plot-quick-start-guide-r-software-and-data-visualization.</li>
+  <li>“GGPLOT2 Legend : Easy Steps to Change the Position and the Appearance of a Graph Legend in R Software.” STHDA, http://www.sthda.com/english/wiki/ggplot2-legend-easy-steps-to-change-the-position-and-the-appearance-of-a-graph-legend-in-r-software.</li>
+  <li>Giannini, Edward H. “Design, Measurement, and Analysis of Clinical Investigations.” Textbook of Pediatric Rheumatology, 2005, pp. 142–173., https://doi.org/10.1016/b978-1-4160-0246-8.50012-7.</li>
+  <li>Leon, A. C. (1998). Descriptive and inferential statistics. Comprehensive Clinical Psychology, 243–285. https://doi.org/10.1016/b0080-4270(73)00264-9</li>
+  <li>“MANOVA Test in R: Multivariate Analysis of Variance”,
+http://www.sthda.com/english/wiki/manova-test-in-r-multivariate-analysis-of-variance</li>
+  <li>“Plot a QQ Chart.” R, https://braverock.com/brian/R/PerformanceAnalytics/html/chart.QQPlot.html.</li>
+  <li>“RGB Color Codes Chart.” RGB Color Codes Chart 🎨,https://www.rapidtables.com/web/color/RGB_Color.html.</li>
+  <li>“Sources of Greenhouse Gas Emissions.” EPA, Environmental Protection Agency, https://www.epa.gov/ghgemissions/sources-greenhouse-gas-emissions#:~:text=Human%20activities%20are%20responsible%20for,over%20the%20last%20150%20years.&text=The%20largest%20source%20of%20greenhouse,electricity%2C%20heat%2C%20and%20transportation.</li>
+</ul>
+
+## VIII. Appendix
+
+In this section, we provide the code that we used to conduct our analysis. Each section above references a portion of this Appendix, forming a connection between the analysis and the code used to conduct it.
+
+### Appendix A: Data Cleaning
+
+### Appendix B: MANOVA
+
+### Appendix C: Chi-Squared Tests for Independence
+
+### Appendix D: T-Tests
+
+### Appendix E: Linear Regression

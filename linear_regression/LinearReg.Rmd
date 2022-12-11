@@ -39,9 +39,9 @@ In this section, we are going use multiple linear regression to determine which 
 Since electric cars do not give off $CO_2$ emissions, I am going to start by reading in our cleaned non-electric, or fuel-based cars, dataset.
 
 ```{r}
-setwd("..")
+setwd("../")
 getwd()
-nonelectric = read.csv("data/cardata_nonelectric_clean.csv")
+nonelectric = read.csv("../data/cardata_nonelectric_clean.csv")
 ```
 
 ```{r, warning=FALSE}
@@ -142,8 +142,12 @@ The following will be considered as categorical "dummy" variables in the model:
 *Emissions Model 1: Full model with all columns as predictors*
 
 ```{r}
-emissions.model = lm(CO2..g.mi. ~ Model.Year.Cat + Test.Veh.Displacement..L. + Vehicle.Type + Rated.Horsepower + X..of.Cylinders.and.Rotors + Tested.Transmission.Type + X..of.Gears + Transmission.Lockup. + Drive.System.Description + Equivalent.Test.Weight..lbs.. + Axle.Ratio + N.V.Ratio + Test.Fuel.Type.Description + THC..g.mi. + CO..g.mi. + RND_ADJ_FE + DT.Inertia.Work.Ratio.Rating + DT.Absolute.Speed.Change.Ratg + Target.Coef.A..lbf. + Target.Coef.B..lbf.mph. + Target.Coef.C..lbf.mph..2. + Set.Coef.A..lbf. + Set.Coef.B..lbf.mph. + Set.Coef.C..lbf.mph..2. + Aftertreatment.Device.Desc, data = training.data)
+# matt running due to issue (ignore this)
+emissions.model = lm(`CO2 (g/mi)` ~ Model.Year.Cat + `Test Veh Displacement (L)` + `Vehicle Type` + `Rated Horsepower` + `# of Cylinders and Rotors` + `Tested Transmission Type` + `# of Gears` + `Transmission Lockup?` + `Drive System Description` + `Equivalent Test Weight (lbs.)` + `Axle Ratio` + `N/V Ratio` + `THC (g/mi)` + `CO (g/mi)` + `RND_ADJ_FE` + `DT-Inertia Work Ratio Rating` + `DT-Absolute Speed Change Ratg` + `Target Coef A (lbf)` + `Target Coef B (lbf/mph)` + `Target Coef C (lbf/mph**2)` + `Set Coef A (lbf)` + `Set Coef B (lbf/mph)` + `Set Coef C (lbf/mph**2)` + `Aftertreatment Device Desc`, data = training.data)
+```
 
+```{r}
+emissions.model = lm(CO2..g.mi. ~ Model.Year.Cat + Test.Veh.Displacement..L. + Vehicle.Type + Rated.Horsepower + X..of.Cylinders.and.Rotors + Tested.Transmission.Type + X..of.Gears + Transmission.Lockup. + Drive.System.Description + Equivalent.Test.Weight..lbs.. + Axle.Ratio + N.V.Ratio + Test.Fuel.Type.Description + THC..g.mi. + CO..g.mi. + RND_ADJ_FE + DT.Inertia.Work.Ratio.Rating + DT.Absolute.Speed.Change.Ratg + Target.Coef.A..lbf. + Target.Coef.B..lbf.mph. + Target.Coef.C..lbf.mph..2. + Set.Coef.A..lbf. + Set.Coef.B..lbf.mph. + Set.Coef.C..lbf.mph..2. + Aftertreatment.Device.Desc, data = training.data)
 ```
 
 ```{r}
@@ -178,6 +182,11 @@ Combining this with the predictors that did not meet the 0.05 significance level
 *Emissions Model 2: Removing multicollinearity from model and initial insignificant terms*
 
 ```{r}
+# matt running due to issue (ignore this)
+emissions.model.2 = lm(`CO2 (g/mi)` ~ Model.Year.Cat + `Test Veh Displacement (L)` + `Vehicle Type` + `Rated Horsepower` + `# of Cylinders and Rotors` + `Tested Transmission Type` + `# of Gears` + `Drive System Description` + `Equivalent Test Weight (lbs.)` + `Axle Ratio` + `N/V Ratio` + `THC (g/mi)` + `RND_ADJ_FE` + `Target Coef A (lbf)` + `Target Coef B (lbf/mph)` + `Target Coef C (lbf/mph**2)` + `Set Coef A (lbf)` + `Set Coef B (lbf/mph)` + `Set Coef C (lbf/mph**2)` + `Aftertreatment Device Desc`, data = training.data)
+```
+
+```{r}
 emissions.model.2 = lm(CO2..g.mi. ~ Model.Year.Cat + Test.Veh.Displacement..L. + Vehicle.Type + Rated.Horsepower + X..of.Cylinders.and.Rotors + Tested.Transmission.Type + X..of.Gears + Drive.System.Description + Equivalent.Test.Weight..lbs.. + Axle.Ratio + N.V.Ratio + Test.Fuel.Type.Description + THC..g.mi. + RND_ADJ_FE + Target.Coef.A..lbf. + Target.Coef.B..lbf.mph. + Target.Coef.C..lbf.mph..2. + Set.Coef.A..lbf. + Set.Coef.B..lbf.mph. + Set.Coef.C..lbf.mph..2. + Aftertreatment.Device.Desc, data = training.data)
 ```
 
@@ -188,6 +197,11 @@ summary(emissions.model.2)
 For the third and final model, we will remove the last of the insignificant variables below the 0.05 significance level, as well as those categorical variables where less than half of the dummy variables are significant. So, because of this, we will remove Set.Coef.C..lbf.mph..2.and also remove the categorical variable (and associated dummy variables) of Aftertreatment.Device.Desc.
 
 *Emissions Model 3: Removing all insignificant terms*
+
+```{r}
+# matt running due to issue (ignore this)
+emissions.model.3 = lm(`CO2 (g/mi)` ~ Model.Year.Cat + `Test Veh Displacement (L)` + `Vehicle Type` + `Rated Horsepower` + `# of Cylinders and Rotors` + `Tested Transmission Type` + `# of Gears` + `Drive System Description` + `Equivalent Test Weight (lbs.)` + `Axle Ratio` + `N/V Ratio` + `THC (g/mi)` + `RND_ADJ_FE` + `Target Coef A (lbf)` + `Target Coef B (lbf/mph)` + `Target Coef C (lbf/mph**2)` + `Set Coef A (lbf)` + `Set Coef B (lbf/mph)`, data = training.data)
+```
 
 ```{r}
 emissions.model.3 = lm(CO2..g.mi. ~ Model.Year.Cat + Test.Veh.Displacement..L. + Vehicle.Type + Rated.Horsepower + X..of.Cylinders.and.Rotors + Tested.Transmission.Type + X..of.Gears + Drive.System.Description + Equivalent.Test.Weight..lbs.. + Axle.Ratio + N.V.Ratio + Test.Fuel.Type.Description + THC..g.mi. + RND_ADJ_FE + Target.Coef.A..lbf. + Target.Coef.B..lbf.mph. + Target.Coef.C..lbf.mph..2. + Set.Coef.A..lbf. + Set.Coef.B..lbf.mph., data = training.data)
